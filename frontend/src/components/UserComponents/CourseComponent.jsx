@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, Heading, Stack, Wrap, WrapItem } from "@chakra-ui/react";
 import LandingPageCarousel from "../../Pages/LandingPageComponents/LandingPageCarousel";
+import CategoryCarousel from "../../Pages/LandingPageComponents/CategoryCarousel";
 import InProgressCarousel from "./InProgressCarousel";
-// import LandingPageCarousel from '../'
+
 const CourseComponent = () => {
   return (
     <Box p={4}>
@@ -28,7 +29,7 @@ const CourseComponent = () => {
           Top courses in Business
         </Heading>
         <Wrap spacing={4}>
-          <LandingPageCarousel />
+          <CategoryCarousel category="Business" />
         </Wrap>
       </Stack>
       <Stack spacing={4} mb={4}>
@@ -36,7 +37,7 @@ const CourseComponent = () => {
           Top courses in IT & Software
         </Heading>
         <Wrap spacing={4}>
-          <LandingPageCarousel />
+          <CategoryCarousel category="IT & Software" />
         </Wrap>
       </Stack>
       <Stack spacing={4} mb={4}>
@@ -44,7 +45,7 @@ const CourseComponent = () => {
           Top courses in Personal Development
         </Heading>
         <Wrap spacing={4}>
-          <LandingPageCarousel />
+          <CategoryCarousel category="Personal Development" />
         </Wrap>
       </Stack>
     </Box>

@@ -1,5 +1,6 @@
 import {
   Box,
+  Badge,
   Button,
   ButtonGroup,
   Flex,
@@ -17,7 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import convertDateFormat, {
   deleteProduct,
   getProduct,
-} from "../../Redux/AdminReducer/action";
+} from "../../Redux/TeacherReducer/action";
 import Pagination from "../Adminitems/Pagination";
 import TeacherNavTop from "./TeacherNavTop";
 import Navbar from "../UserComponents/UserNavbar";
@@ -64,6 +65,19 @@ export default function TeacherCourses() {
     setPage((prev) => prev + val);
   };
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "pending":
+        return <Badge colorScheme="yellow">Pending Approval</Badge>;
+      case "published":
+        return <Badge colorScheme="green">Published</Badge>;
+      case "rejected":
+        return <Badge colorScheme="red">Rejected</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
+  };
+
   return (
     <Grid className="Nav" h={"99vh"} w="94%" gap={10}>
       {/* <AdminSidebar/>  */}
@@ -106,14 +120,14 @@ export default function TeacherCourses() {
                   <Th>Description</Th>
                   <Th>Price</Th>
                   <Th>Teacher</Th>
-                  <Th>Actions</Th> {/* Thêm Th cho cột hành động */}
+                  <Th>Status</Th>
+                  <Th>Actions</Th>
                 </Tr>
               </Thead>
 
-              <Tbody> {/* Tbody nằm ngoài map */}
+              <Tbody>
                 {store?.length > 0 &&
                   store.map((el, i) => {
-                    // Kiểm tra nếu el tồn tại mới render, tránh crash dòng 116
                     if (!el) return null;
 
                     return (
@@ -124,7 +138,8 @@ export default function TeacherCourses() {
                         <Td>{el?.description?.substring(0, 20)}...</Td>
                         <Td>{el?.price}</Td>
                         <Td>{el?.teacher}</Td>
-                        <Td> {/* Đưa các nút vào Td để đúng cấu trúc Table */}
+                        <Td>{getStatusBadge(el?.status)}</Td>
+                        <Td>
                           <Flex gap={2} flexWrap="wrap">
                             <Button
                               size="sm"

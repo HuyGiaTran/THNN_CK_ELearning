@@ -195,6 +195,45 @@ export const patchUser = (id, data) => (dispatch) => {
     .catch((e) => console.log(e));
 };
 
+export const approveCourse = (id) => (dispatch) => {
+  dispatch({ type: PRODUCT_REQUEST });
+  const token = getAuthToken();
+  fetch(`${API_BASE_URL}/courses/approve/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((res) => {
+      console.log("approve", res);
+      if (res?.course) {
+        dispatch({ type: PATCH_PRODUCT_SUCCESS, payload: res.course });
+      }
+      dispatch(getProduct(4, 3));
+    })
+    .catch((e) => dispatch({ type: PRODUCT_FAILURE }));
+};
+
+export const rejectCourse = (id) => (dispatch) => {
+  dispatch({ type: PRODUCT_REQUEST });
+  const token = getAuthToken();
+  fetch(`${API_BASE_URL}/courses/reject/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((res) => {
+      console.log("reject", res);
+      dispatch(getProduct(4, 3));
+    })
+    .catch((e) => dispatch({ type: PRODUCT_FAILURE }));
+};
+
 export const deleteProduct = (id) => (dispatch) => {
   dispatch({ type: PRODUCT_REQUEST });
   const token = getAuthToken();

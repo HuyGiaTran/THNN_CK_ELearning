@@ -35,7 +35,12 @@ const courseSchema = new mongoose.Schema({
     type:String,
     required:true
   },
-  videos: [{type: mongoose.Schema.Types.ObjectId, ref: "videos"}]
+  videos: [{type: mongoose.Schema.Types.ObjectId, ref: "videos"}],
+  status: {
+    type: String,
+    enum: ['pending', 'published', 'rejected'],
+    default: 'pending'
+  }
 });
 
 //  course
