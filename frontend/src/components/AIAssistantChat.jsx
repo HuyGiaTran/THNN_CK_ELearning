@@ -13,6 +13,8 @@ import {
 } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
   const [messages, setMessages] = useState([]);
@@ -24,7 +26,7 @@ const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
   const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', });
   };
 
   useEffect(() => {
@@ -156,10 +158,38 @@ const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
               p={2}
               borderRadius="lg"
               fontSize="xs"
+              // Cấy CSS tùy chỉnh để render Markdown đẹp mắt bên trong Chakra UI
+              sx={{
+                '& p': { lineHeight: '1.5', mb: 1 },
+                '& ul, & ol': { ml: 4, mb: 2 },
+                '& li': { mb: 0.5 },
+                '& h3': { fontSize: 'sm', fontWeight: 'bold', mt: 2, mb: 1 },
+                // Format khối code xám đen cực xịn cho câu lệnh CLI/Code
+                '& pre': {
+                  bg: 'gray.800',
+                  color: 'gray.100',
+                  p: 2,
+                  borderRadius: 'md',
+                  my: 2,
+                  overflowX: 'auto',
+                  fontFamily: 'monospace'
+                },
+                '& code': { fontWeight: 'bold', bg: 'blackAlpha.200', p: '2px 4px', borderRadius: 'sm' },
+                '& pre code': { bg: 'transparent', p: 0, fontWeight: 'normal' }
+              }}
             >
-              <Text lineHeight="1.4" whiteSpace="pre-wrap" wordBreak="break-word">
-                {message.text}
-              </Text>
+              {/* Phân luồng: AI dùng Markdown, User dùng Plain Text */}
+              {message.type === 'ai' ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.text}
+                </ReactMarkdown>
+              ) : (
+                <Text lineHeight="1.4" whiteSpace="pre-wrap" wordBreak="break-word">
+                  {message.text}
+                </Text>
+              )}
+
+              {/* Phần Badge ngữ cảnh giữ nguyên */}
               {message.type === 'ai' && (
                 <HStack spacing={1} mt={1} pt={1} borderTop="1px solid" borderColor="gray.300">
                   <Badge

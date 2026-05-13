@@ -1,33 +1,45 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { auth } = require('../middlewares/users.middleware');
-const { queryAIAssistant } = require('../helpers/aiAssistant.helper');
+const { queryAIAssistant, extractTextFromPDF } = require('../helpers/aiAssistant.helper');
 const { canUserAccessCourseContent } = require('../helpers/courseAccess');
 
 const aiAssistantRoute = express.Router();
 
-/**
- * POST /ai-assistant/ask
- * Send a question to AI Assistant
- * 
- * Request body:
- * {
- *   courseId: string (MongoDB ObjectId of course),
- *   question: string (User's question)
- * }
- * 
- * Response:
- * {
- *   response: string (AI Assistant's answer),
- *   isWithinContext: boolean (Whether answer is within course material),
- *   tokens: number (OpenAI tokens used)
- * }
- */
+// Multer setup
+const tempDir = path.join(__dirname, '../uploads/temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, tempDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      cb(new Error('Only PDF files allowed'));
+    } else {
+      cb(null, true);
+    }
+  },
+});
+
 aiAssistantRoute.post('/ask', auth, async (req, res) => {
   try {
     const { courseId, question } = req.body;
     const userId = req.body.userId;
 
-    // Validation
     if (!courseId || !question) {
       return res.status(400).json({
         message: 'Missing required fields: courseId and question',
@@ -46,7 +58,6 @@ aiAssistantRoute.post('/ask', auth, async (req, res) => {
       });
     }
 
-    // Check if user has access to this course
     const access = await canUserAccessCourseContent(userId, courseId, {
       forbiddenMessage: 'You must be enrolled in this course to use AI Assistant.',
     });
@@ -58,7 +69,6 @@ aiAssistantRoute.post('/ask', auth, async (req, res) => {
       });
     }
 
-    // Query AI Assistant with RAG
     const result = await queryAIAssistant(courseId, question);
 
     res.status(200).json({
@@ -79,34 +89,68 @@ aiAssistantRoute.post('/ask', auth, async (req, res) => {
   }
 });
 
-/**
- * POST /ai-assistant/upload-pdf
- * Upload course material PDF (Admin/Teacher only)
- * 
- * This endpoint allows teachers to upload course material PDFs
- * which will be used for RAG context
- */
-aiAssistantRoute.post('/upload-pdf', auth, async (req, res) => {
-  try {
-    const { role } = req.body;
+aiAssistantRoute.post('/upload-pdf', auth, upload.single('file'), async (req, res) => {
+  const tempFilePath = req.file ? req.file.path : null;
 
-    // Only admin and teacher can upload
+  try {
+    const { courseId } = req.body;
+    // const { role } = req.body;
+    const role = req.role || req.user?.role || req.body.role;
+
     if (role !== 'admin' && role !== 'teacher') {
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
       return res.status(403).json({
         message: 'Only admin and teachers can upload course materials',
       });
     }
 
-    // TODO: Implement file upload logic with multer
-    // For now, we'll return a placeholder response
+    if (!courseId) {
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+      return res.status(400).json({
+        message: 'Missing courseId',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: 'No file uploaded',
+      });
+    }
+
+    const dataDir = path.join(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    const extractedText = await extractTextFromPDF(tempFilePath);
+
+    const outputPath = path.join(dataDir, `course_${courseId}.txt`);
+    fs.writeFileSync(outputPath, extractedText, 'utf-8');
+
+    if (fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
+
     res.status(200).json({
-      message: 'PDF upload endpoint - to be implemented with multer',
-      hint: 'Use formData with file field to upload PDF',
+      success: true,
+      message: 'PDF uploaded and processed successfully',
+      courseId: courseId,
+      filePath: outputPath,
     });
   } catch (error) {
     console.error('PDF Upload Error:', error.message);
+
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
+
     res.status(500).json({
-      message: 'Failed to upload PDF',
+      success: false,
+      message: 'Failed to upload and process PDF',
       error: error.message,
     });
   }
