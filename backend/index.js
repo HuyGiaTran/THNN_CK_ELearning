@@ -5,6 +5,7 @@ const { userRouter } = require("./routes/users.routes");
 const { courseRoute } = require("./routes/courses.route");
 const { videoRoute } = require("./routes/videos.route");
 const { quizRouter } = require("./routes/quiz.route");
+const { aiAssistantRoute } = require("./routes/aiAssistant.route");
 
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -22,6 +23,8 @@ app.use("/courses", courseRoute);
 app.use("/videos", videoRoute);
 
 app.use("/quizzes", quizRouter);
+
+app.use("/ai-assistant", aiAssistantRoute);
 
 app.get("/regenerateToken", (req, res) => {
   const rToken = req.headers.authorization?.split(" ")[1];
