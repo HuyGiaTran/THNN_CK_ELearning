@@ -14,8 +14,19 @@ import {
 
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { loginFetch } from "../Redux/UserReducer/action";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { showToast } from "./SignUp";
+
+function getSafeNext(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (!decoded.startsWith("/") || decoded.startsWith("//")) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
 
 const Login = () => {
   const emailInput = useRef(null);
@@ -28,6 +39,8 @@ const Login = () => {
   const userStore = useSelector((store) => store.UserReducer);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
   const toast = useToast();
   // will show the input element when click on element
   function showInput(e) {
@@ -83,20 +96,21 @@ const Login = () => {
   }
 
 
-  useEffect(()=>{
-    // if isAuth is true move to dashboard;
-
-  if (userStore.isAuth) {
-    if(userStore?.role==='user'){
-      navigate("/home");
-    }else if(userStore?.role === "admin"){
-      navigate("/admin/dashboard");
+  useEffect(() => {
+    if (!userStore.isAuth) return;
+    const next = getSafeNext(nextParam);
+    if (next) {
+      navigate(next, { replace: true });
+      return;
     }
-    else if(userStore?.role==='teacher'){
+    if (userStore?.role === "user") {
+      navigate("/home");
+    } else if (userStore?.role === "admin") {
+      navigate("/admin/dashboard");
+    } else if (userStore?.role === "teacher") {
       navigate("/TeacherDashboard");
     }
-  }
-  },[userStore?.isAuth,userStore?.role])
+  }, [userStore?.isAuth, userStore?.role, navigate, nextParam]);
 
   return (
     <Box pb='2rem'>
@@ -172,9 +186,19 @@ const Login = () => {
                 />
               </Box>
             </Box>
-            <Box display='flex' m='1rem 0' fontSize='0.7rem'>
-              <Text >You don't have Account with us?</Text>
-              <Link to='/signup'><Text _hover={{}} fontWeight='500' ml='0.5rem' color='black'>SignUp</Text></Link>
+            <Box display="flex" m="1rem 0" fontSize="0.7rem">
+              <Text>You don&apos;t have Account with us?</Text>
+              <Link
+                to={
+                  nextParam
+                    ? `/signup?next=${encodeURIComponent(nextParam)}`
+                    : "/signup"
+                }
+              >
+                <Text _hover={{}} fontWeight="500" ml="0.5rem" color="black">
+                  SignUp
+                </Text>
+              </Link>
             </Box>
             {/* button  */}
             <Box mt="15px">

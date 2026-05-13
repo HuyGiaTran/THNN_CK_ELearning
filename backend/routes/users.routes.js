@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { UserModel } = require("../models/users.models");
 const jwt = require("jsonwebtoken");
@@ -290,6 +291,28 @@ userRouter.get("/userCourse/:userId", async (req, res) => {
 // EndPoint: /users/addCourse/:courseId
 // FRONTEND: When user have purchased the couse and we have add it to the user course list;
 
+// enrollment flag for the authenticated user (JWT -> req.body.userId)
+// EndPoint: GET /users/enrollment/:courseId
+userRouter.get("/enrollment/:courseId", auth, async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Invalid course id" });
+    }
+    const user = await UserModel.findById(req.body.userId).select("course");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const courseOid = new mongoose.Types.ObjectId(courseId);
+    const enrolled = user.course.some((cid) => cid.equals(courseOid));
+    res.status(200).json({ enrolled });
+  } catch (err) {
+    res
+      .status(400)
+      .json({ message: "Something went wrong", error: err.message });
+  }
+});
+
 userRouter.post("/addCourse/:courseId", auth, async (req, res) => {
   try {
     let id = req.body.userId;
@@ -340,8 +363,24 @@ userRouter.get("/Teachme/:userId", async (req, res) => {
     user.role = "teacher";
     await user.save();
 
-    // Return success message
-    res.status(200).json({ message: "User role updated to teacher" });
+    // New JWT so protected routes (e.g. POST /courses/add) see role "teacher"
+    const token = jwt.sign(
+      { userId: user._id, user: user.name, role: user.role },
+      "SRM",
+      { expiresIn: "7d" }
+    );
+    const rToken = jwt.sign(
+      { userId: user._id, user: user.name },
+      "SRM",
+      { expiresIn: "24d" }
+    );
+
+    res.status(200).json({
+      message: "User role updated to teacher",
+      token,
+      rToken,
+      user,
+    });
   } catch (err) {
     // Handle errors
     res.status(400).json({ message: "Something went wrong", error: err.message });

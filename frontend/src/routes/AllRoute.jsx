@@ -13,6 +13,8 @@ import Setting from "../components/Adminitems/Setting";
 import GiftCard from "../components/Adminitems/GiftCard";
 import Users from "../components/Adminitems/Users";
 import SinglePage from "../components/singlePageComps/SinglePage";
+import CourseLearnPage from "../Pages/CourseLearnPage";
+import CourseEnrollPage from "../Pages/CourseEnrollPage";
 import Login from "../components/LogIn";
 import SignUp from "../components/SignUp";
 import Payment from "../Pages/Payment/Payment";
@@ -29,13 +31,15 @@ import { TeacherRoute } from "./TeacherRoute";
 import Add from "../components/Adminitems/Add";
 import TeacherCourses from "../components/TeacherComponents/TeacherCourses";
 import AddTeacherCourse from "../components/TeacherComponents/AddCourse";
-import AddTeacherVideos from "../components/TeacherComponents/AddTeacherVideos";
+import TeacherVideoCoursesPage from "../components/TeacherComponents/TeacherVideoCoursesPage";
+import TeacherCourseVideosPage, {
+  RedirectTeacherVideosAdd,
+} from "../components/TeacherComponents/TeacherCourseVideosPage";
 import AddTeacher from "../components/TeacherComponents/AddTeacher";
-import GetTeacherVideos from "../components/TeacherComponents/GetTeacherVideos";
 import CertificatesPage from "../Pages/CertificatesPage";
 import QuizComponent from "../components/UserComponents/QuizComponent";
 import AddTeacherQuiz from "../components/TeacherComponents/AddQuiz";
-
+import TeacherCreateQuiz from "../components/TeacherComponents/TeacherCreateQuiz";
 
 const AllRoute = () => {
   return (
@@ -45,6 +49,22 @@ const AllRoute = () => {
         element={
           <PrivateRoutes>
             <SinglePage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/course/:id/enroll"
+        element={
+          <PrivateRoutes>
+            <CourseEnrollPage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/course/:id/learn"
+        element={
+          <PrivateRoutes>
+            <CourseLearnPage />
           </PrivateRoutes>
         }
       />
@@ -254,9 +274,31 @@ const AllRoute = () => {
         path="/Teacher/videos/add/:courseId"
         element={
           <PrivateRoutes>
-          <TeacherRoute>
-          <AddTeacherVideos />
-          </TeacherRoute>
+            <TeacherRoute>
+              <RedirectTeacherVideosAdd />
+            </TeacherRoute>
+          </PrivateRoutes>
+        }
+      />
+
+      <Route
+        path="/Teacher/videos/course/:courseId"
+        element={
+          <PrivateRoutes>
+            <TeacherRoute>
+              <TeacherCourseVideosPage />
+            </TeacherRoute>
+          </PrivateRoutes>
+        }
+      />
+
+      <Route
+        path="/Teacher/create-quiz/:courseId"
+        element={
+          <PrivateRoutes>
+            <TeacherRoute>
+              <TeacherCreateQuiz />
+            </TeacherRoute>
           </PrivateRoutes>
         }
       />
@@ -298,9 +340,9 @@ const AllRoute = () => {
         path="/Teacher/videos"
         element={
           <PrivateRoutes>
-           <TeacherRoute>
-           <GetTeacherVideos/>
-           </TeacherRoute>
+            <TeacherRoute>
+              <TeacherVideoCoursesPage />
+            </TeacherRoute>
           </PrivateRoutes>
         }
       />

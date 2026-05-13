@@ -19,6 +19,7 @@ import { BiUserCircle } from "react-icons/bi";
 import { FaUserShield } from "react-icons/fa";
 import { FiMoreVertical } from "react-icons/fi";
 import { capitalizeFirstLetter } from "../../Redux/UserReducer/action";
+import { API_BASE_URL } from "../../config/api";
 const Dropdown = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -36,7 +37,7 @@ const Dropdown = () => {
     };
     axios
       .post(
-        "http://localhost:5001/users/logout",
+        `${API_BASE_URL}/users/logout`,
         {},
         { headers }
       )

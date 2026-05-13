@@ -2,7 +2,7 @@ const express = require('express');
 const CertificateModel = require('../models/certificate.model');
 const { UserModel } = require('../models/users.models');
 const courseModel = require('../models/courses.model');
-const QuizModel = require('../models/quiz.model');
+const CourseQuizModel = require('../models/courseQuiz.model');
 const { auth } = require('../middlewares/users.middleware');
 const { generateCertificatePDF } = require('../utils/certificateGenerator');
 
@@ -35,7 +35,7 @@ certificateRoute.post('/generate', async (req, res) => {
     }
 
     // Validate quiz exists
-    const quiz = await QuizModel.findById(quizId);
+    const quiz = await CourseQuizModel.findById(quizId);
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz not found' });
     }

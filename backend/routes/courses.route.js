@@ -8,6 +8,7 @@ const courseRoute = express.Router();
 
 
 
+
 courseRoute.get("/all", async (req, res) => {
   try {
     let { q, sortBy, sortOrder, page, limit } = req.query;
@@ -47,6 +48,7 @@ courseRoute.use(auth);
 // get request for all courses
 // EndPoint: /courses/
 //FRONTEND: we can get the list of all course
+// FIX: Teacher can only see their own courses, Admin sees all
 
 courseRoute.get("/", async (req, res) => {
   try {
@@ -54,6 +56,10 @@ courseRoute.get("/", async (req, res) => {
     let filter = {};
     if (q) {
       filter.title = { $regex: q, $options: "i" };
+    }
+    // If the user is a teacher, only return courses belonging to that teacher
+    if (req.body.role === "teacher") {
+      filter.teacherId = req.body.userId;
     }
     const sort = {};
     if (sortBy) {
@@ -78,7 +84,7 @@ courseRoute.get("/", async (req, res) => {
 
 courseRoute.get("/TeacherCourses", async (req, res) => {
   try {
-    let { userId } = req.query;
+    let { q, sortBy, sortOrder, page, limit, userId } = req.query;
     let filter = {};
     if (q) {
       filter.title = { $regex: q, $options: "i" };
@@ -137,7 +143,7 @@ courseRoute.post("/add", async (req, res) => {
         res.status(403).json({ message: "Course Already Present" });
       } else {
         let data = req.body
-        const newCourse = new courseModel({...data,teacher:req.body.username,teacherId:req.body.userId});
+        const newCourse = new courseModel({ ...data, teacher: req.body.username, teacherId: req.body.userId });
         await newCourse.save();
         res.status(201).json({ message: "Course Added", data: newCourse });
       }
@@ -188,7 +194,7 @@ courseRoute.delete("/delete/:courseID", async (req, res) => {
     if (req.body.role == "admin" || req.body.role == "teacher") {
       const courseID = req.params.courseID;
       const course = await courseModel.findByIdAndDelete({ _id: courseID });
-     // console.log(course);
+      // console.log(course);
       if (!course) {
         res.status(404).json({ message: "course not found" });
       } else {

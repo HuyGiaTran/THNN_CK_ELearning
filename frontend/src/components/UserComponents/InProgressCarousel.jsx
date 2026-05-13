@@ -8,6 +8,7 @@ import Card from "../../Pages/LandingPageComponents/Card";
 import LoadingComponent from "../../Pages/LoadingComponents/LoadingComponent";
 import jwtDecode from "jwt-decode";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
 
 const InProgressCarousel = () => {
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,7 @@ const InProgressCarousel = () => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     // console.log(token.userId);
-    const url = `http://localhost:5001/users/userCourse/${user.userId}`;
+    const url = `${API_BASE_URL}/users/userCourse/${user.userId}`;
 
     axios
       .get(url)
@@ -81,7 +82,11 @@ const InProgressCarousel = () => {
       overflow="hidden"
     >
     {course?.length!==0 ?       <Slider {...settings}>
-        {!loading ? course.map((el) => <Card {...el} key={el._id} />) : ""}
+        {!loading
+          ? course.map((el) => (
+              <Card {...el} key={el._id} resumeLearning />
+            ))
+          : ""}
       </Slider> : (
         <Box
           display="flex"

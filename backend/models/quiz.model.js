@@ -1,71 +1,51 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// Schema for quiz questions
-const questionSchema = new mongoose.Schema({
-  questionText: {
-    type: String,
-    required: true
+/** Per-video lesson quiz (unique videoId). Collection: `quizzes`. */
+const questionSchema = new mongoose.Schema(
+  {
+    prompt: { type: String, required: true },
+    choices: {
+      type: [String],
+      validate: {
+        validator(v) {
+          return Array.isArray(v) && v.length >= 2;
+        },
+        message: "Each question needs at least two choices",
+      },
+    },
+    correctIndex: { type: Number, required: true, min: 0 },
   },
-  options: {
-    type: [String],
-    required: true,
-    validate: {
-      validator: (v) => v.length === 4,
-      message: 'Must have exactly 4 options (A, B, C, D)'
-    }
-  },
-  correctAnswer: {
-    type: Number,
-    required: true,
-    enum: [0, 1, 2, 3]
-  }
-});
+  { _id: false }
+);
 
-// Quiz schema
-const quizSchema = new mongoose.Schema({
-  courseId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'course',
-    required: true
+const quizSchema = new mongoose.Schema(
+  {
+    videoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "videos",
+      required: true,
+      unique: true,
+      index: true,
+    },
+    courseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "course",
+      index: true,
+    },
+    title: { type: String, required: true },
+    questions: {
+      type: [questionSchema],
+      validate: {
+        validator(q) {
+          return Array.isArray(q) && q.length >= 1;
+        },
+        message: "At least one question is required",
+      },
+    },
   },
-  title: {
-    type: String,
-    required: true
-  },
-  description: {
-    type: String,
-    default: ''
-  },
-  questions: {
-    type: [questionSchema],
-    required: true,
-    validate: {
-      validator: (v) => v.length > 0,
-      message: 'Quiz must have at least one question'
-    }
-  },
-  passingScore: {
-    type: Number,
-    default: 70,
-    min: 0,
-    max: 100
-  },
-  totalPoints: {
-    type: Number,
-    default: function() {
-      return this.questions.length * 10;
-    }
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  { timestamps: true, versionKey: false }
+);
 
-const QuizModel = mongoose.model('quiz', quizSchema);
+const QuizModel = mongoose.model("quiz", quizSchema);
 
-module.exports = QuizModel;
+module.exports = { QuizModel };

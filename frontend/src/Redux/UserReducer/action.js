@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
 
 import {
   actionLoginError,
@@ -9,7 +10,7 @@ import {
   actionsingUpSuccess,
 } from "./actionType";
 
-let baseURL = "http://localhost:5001/";
+const baseURL = `${API_BASE_URL}/`;
 
 export const loginFetch = (value) => (dispatch) => {
   dispatch(actionLoginLoading());

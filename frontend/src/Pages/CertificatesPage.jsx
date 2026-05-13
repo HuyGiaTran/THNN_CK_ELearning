@@ -14,22 +14,25 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  ModalFooter,
   Spinner,
   Center,
-  Badge,
-  Divider,
+  useToast,
 } from '@chakra-ui/react';
-import { fetchUserCertificates } from '../Redux/CertificateReducer/action';
+import { fetchUserCertificates, downloadCertificatePDF } from '../Redux/CertificateReducer/action';
 import CertificateCard from '../components/UserComponents/CertificateCard';
+import CertificateVisual from '../components/UserComponents/CertificateVisual';
 import { useNavigate } from 'react-router-dom';
+import { FiDownload } from 'react-icons/fi';
 
 const CertificatesPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedCertificate, setSelectedCertificate] = useState(null);
 
-  const { certificates, loading, error } = useSelector(
+  const { certificates, loading, error, downloading } = useSelector(
     (state) => state.CertificateReducer
   );
 
@@ -46,6 +49,34 @@ const CertificatesPage = () => {
   const handleViewDetails = (certificate) => {
     setSelectedCertificate(certificate);
     onOpen();
+  };
+
+  const handleModalDownload = async () => {
+    if (!selectedCertificate || !token) return;
+    try {
+      await dispatch(
+        downloadCertificatePDF(
+          selectedCertificate._id,
+          token,
+          selectedCertificate.certificateNumber
+        )
+      );
+      toast({
+        title: 'Downloaded',
+        description: 'Certificate PDF saved.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Could not download PDF.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
   };
 
   if (!token) {
@@ -145,102 +176,45 @@ const CertificatesPage = () => {
         )}
       </VStack>
 
-      {/* Certificate Details Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Certificate Details</ModalHeader>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="full"
+        isCentered
+        scrollBehavior="inside"
+      >
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent mx={{ base: 2, md: 8 }} my={{ base: 2, md: 6 }} maxH="calc(100vh - 2rem)" borderRadius="lg">
+          <ModalHeader borderBottomWidth="1px" py={3}>
+            <Text fontSize="lg" fontWeight="semibold">
+              Certificate preview
+            </Text>
+            <Text fontSize="sm" color="gray.600" fontWeight="normal">
+              Same layout as the PDF download
+            </Text>
+          </ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6}>
+          <ModalBody py={6} px={{ base: 3, md: 8 }} bg="gray.100">
             {selectedCertificate && (
               <VStack spacing={4} align="stretch">
-                {/* Certificate Header */}
-                <Box textAlign="center" py={4} bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" borderRadius="md" color="white">
-                  <Text fontSize="2xl" fontWeight="bold">
-                    CERTIFICATE
-                  </Text>
-                  <Text fontSize="sm" opacity="0.9" mt={1}>
-                    OF COMPLETION
-                  </Text>
-                </Box>
-
-                <Divider />
-
-                {/* Details */}
-                <VStack spacing={3} align="start" w="100%">
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Course Name
-                    </Text>
-                    <Text fontSize="lg" fontWeight="bold">
-                      {selectedCertificate.courseName}
-                    </Text>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Student Name
-                    </Text>
-                    <Text fontSize="lg" fontWeight="bold">
-                      {selectedCertificate.studentName}
-                    </Text>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Quiz Score
-                    </Text>
-                    <Badge colorScheme="green" fontSize="md" py="1" px="3">
-                      {selectedCertificate.quizScore}%
-                    </Badge>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Issued Date
-                    </Text>
-                    <Text fontSize="md">
-                      {new Date(selectedCertificate.issuedDate).toLocaleDateString(
-                        'en-US',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        }
-                      )}
-                    </Text>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Certificate ID
-                    </Text>
-                    <Text fontSize="md" fontFamily="monospace" bg="gray.50" p={2} borderRadius="md">
-                      {selectedCertificate.certificateId}
-                    </Text>
-                  </Box>
-
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.600">
-                      Certificate Number
-                    </Text>
-                    <Text fontSize="md" fontFamily="monospace" bg="gray.50" p={2} borderRadius="md">
-                      {selectedCertificate.certificateNumber}
-                    </Text>
-                  </Box>
-                </VStack>
-
-                <Divider />
-
-                {/* Action Buttons */}
-                <HStack spacing={3} w="100%">
-                  <Button flex="1" colorScheme="blue" onClick={onClose}>
-                    Close
-                  </Button>
-                </HStack>
+                <CertificateVisual certificate={selectedCertificate} />
               </VStack>
             )}
           </ModalBody>
+          <ModalFooter borderTopWidth="1px" gap={3} flexWrap="wrap">
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+            <Button
+              colorScheme="blue"
+              leftIcon={<FiDownload />}
+              onClick={handleModalDownload}
+              isLoading={downloading}
+              isDisabled={!selectedCertificate}
+            >
+              Download PDF
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
     </Box>
