@@ -18,12 +18,18 @@ import {
   AlertTitle,
   AlertDescription,
   useToast,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from "@chakra-ui/react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ReactPlayer from "react-player";
 import Navbar from "../components/UserComponents/UserNavbar";
 import Footer from "./Footer";
+import AIAssistantChat from "../components/AIAssistantChat";
 import { API_BASE_URL } from "../config/api";
 
 export default function CourseLearnPage() {
@@ -265,265 +271,304 @@ export default function CourseLearnPage() {
   }
 
   return (
-    <Box minH="100vh" bg="gray.100">
-      <Navbar />
-      <Box pt="80px" px={{ base: 3, md: 6 }} pb={10} maxW="1400px" mx="auto">
-        {phase === "loading" && (
-          <Flex justify="center" align="center" minH="40vh" gap={3}>
-            <Spinner size="lg" color="purple.500" />
-            <Text color="gray.600">Loading course…</Text>
-          </Flex>
-        )}
+      <Box minH="100vh" bg="gray.100">
+        <Navbar />
+        <Box pt="80px" px={{ base: 3, md: 6 }} pb={10} maxW="1400px" mx="auto">
+          {phase === "loading" && (
+            <Flex justify="center" align="center" minH="40vh" gap={3}>
+              <Spinner size="lg" color="purple.500" />
+              <Text color="gray.600">Loading course…</Text>
+            </Flex>
+          )}
 
-        {phase === "error" && (
-          <Box
-            bg="white"
-            p={8}
-            borderRadius="md"
-            boxShadow="sm"
-            textAlign="center"
-          >
-            <Text fontWeight="bold" mb={2}>
-              {errorMessage}
-            </Text>
-            <Button
-              colorScheme="purple"
-              mt={4}
-              onClick={() => navigate(`/course/${id}`)}
+          {phase === "error" && (
+            <Box
+              bg="white"
+              p={8}
+              borderRadius="md"
+              boxShadow="sm"
+              textAlign="center"
             >
-              Back to course overview
-            </Button>
-          </Box>
-        )}
-
-        {phase === "ready" && course && (
-          <>
-            <Heading size="lg" mb={4} color="gray.800">
-              {course.title}
-            </Heading>
-            <Flex
-              gap={4}
-              align="stretch"
-              direction={{ base: "column", lg: "row" }}
-            >
-              <Box
-                flex="1"
-                minW={0}
-                bg="black"
-                borderRadius="md"
-                overflow="hidden"
-                boxShadow="md"
+              <Text fontWeight="bold" mb={2}>
+                {errorMessage}
+              </Text>
+              <Button
+                colorScheme="purple"
+                mt={4}
+                onClick={() => navigate(`/course/${id}`)}
               >
-                {activeVideo?.link ? (
-                  <AspectRatio ratio={16 / 9} maxW="100%">
-                    <ReactPlayer
-                      url={activeVideo.link}
-                      width="100%"
-                      height="100%"
-                      controls
-                      playing={false}
-                      config={{
-                        youtube: { playerVars: { modestbranding: 1 } },
-                      }}
-                    />
-                  </AspectRatio>
-                ) : (
-                  <Flex
-                    minH={{ base: "220px", md: "400px" }}
-                    align="center"
-                    justify="center"
-                    bg="gray.900"
+                Back to course overview
+              </Button>
+            </Box>
+          )}
+
+          {phase === "ready" && course && (
+            <>
+              <Heading size="lg" mb={4} color="gray.800">
+                {course.title}
+              </Heading>
+              <Flex
+                gap={4}
+                align="stretch"
+                direction={{ base: "column", lg: "row" }}
+              >
+                <Box
+                  flex="1"
+                  minW={0}
+                  bg="black"
+                  borderRadius="md"
+                  overflow="hidden"
+                  boxShadow="md"
+                >
+                  {activeVideo?.link ? (
+                    <AspectRatio ratio={16 / 9} maxW="100%">
+                      <ReactPlayer
+                        url={activeVideo.link}
+                        width="100%"
+                        height="100%"
+                        controls
+                        playing={false}
+                        config={{
+                          youtube: { playerVars: { modestbranding: 1 } },
+                        }}
+                      />
+                    </AspectRatio>
+                  ) : (
+                    <Flex
+                      minH={{ base: "220px", md: "400px" }}
+                      align="center"
+                      justify="center"
+                      bg="gray.900"
+                    >
+                      <Text color="gray.300">
+                        Select a lesson or add a video link for this course.
+                      </Text>
+                    </Flex>
+                  )}
+                </Box>
+
+                <Box
+                  w={{ base: "100%", lg: "360px" }}
+                  flexShrink={0}
+                  bg="white"
+                  borderRadius="md"
+                  boxShadow="md"
+                  display="flex"
+                  flexDirection="column"
+                  h={{ lg: "70vh" }}
+                >
+                  <Tabs
+                    display="flex"
+                    flexDirection="column"
+                    flex="1"
+                    minH={0}
+                    colorScheme="purple"
                   >
-                    <Text color="gray.300">
-                      Select a lesson or add a video link for this course.
+                    <TabList
+                      borderBottom="1px solid"
+                      borderColor="gray.200"
+                      px={0}
+                    >
+                      <Tab flex={1} py={3} fontSize="sm" fontWeight="600">
+                        Course Content
+                      </Tab>
+                      <Tab flex={1} py={3} fontSize="sm" fontWeight="600">
+                        AI Assistant
+                      </Tab>
+                    </TabList>
+
+                    <TabPanels
+                      flex="1"
+                      minH={0}
+                      p={0}
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      <TabPanel
+                        h="100%"
+                        p={0}
+                        overflowY="auto"
+                        display="flex"
+                        flexDirection="column"
+                      >
+                        {videos.length === 0 ? (
+                          <Box p={4}>
+                            <Text color="gray.600" fontSize="sm">
+                              No videos are published for this course yet.
+                            </Text>
+                          </Box>
+                        ) : (
+                          <VStack align="stretch" spacing={0} divider={<Divider />}>
+                            {videos.map((v, idx) => (
+                              <Button
+                                key={v._id || idx}
+                                variant="ghost"
+                                justifyContent="flex-start"
+                                h="auto"
+                                py={3}
+                                px={3}
+                                borderRadius={0}
+                                bg={idx === activeIndex ? "purple.50" : "transparent"}
+                                _hover={{ bg: "purple.100" }}
+                                onClick={() => setActiveIndex(idx)}
+                              >
+                                <Flex gap={3} w="100%" textAlign="left">
+                                  <Image
+                                    src={v.img}
+                                    alt=""
+                                    boxSize="56px"
+                                    objectFit="cover"
+                                    borderRadius="sm"
+                                    flexShrink={0}
+                                  />
+                                  <Box minW={0}>
+                                    <Text
+                                      fontWeight="semibold"
+                                      fontSize="sm"
+                                      noOfLines={2}
+                                      color="gray.800"
+                                    >
+                                      {v.title}
+                                    </Text>
+                                    {v.description ? (
+                                      <Text
+                                        fontSize="xs"
+                                        color="gray.500"
+                                        noOfLines={2}
+                                      >
+                                        {v.description}
+                                      </Text>
+                                    ) : null}
+                                  </Box>
+                                </Flex>
+                              </Button>
+                            ))}
+                          </VStack>
+                        )}
+                      </TabPanel>
+
+                      <TabPanel
+                        h="100%"
+                        p={0}
+                        display="flex"
+                        flexDirection="column"
+                      >
+                        <AIAssistantChat
+                          courseId={id}
+                          token={token}
+                          containerHeight="100%"
+                        />
+                      </TabPanel>
+                    </TabPanels>
+                  </Tabs>
+                </Box>
+              </Flex>
+
+              {activeVideo && (
+                <Box mt={6} bg="white" p={5} borderRadius="md" boxShadow="sm">
+                  <Heading size="md" mb={2}>
+                    {activeVideo.title}
+                  </Heading>
+                  {activeVideo.description ? (
+                    <Text color="gray.700">{activeVideo.description}</Text>
+                  ) : null}
+                </Box>
+              )}
+
+              <Box mt={6} bg="white" p={5} borderRadius="md" boxShadow="sm">
+                <Heading size="md" mb={3} color="gray.800">
+                  Lesson quiz
+                </Heading>
+                {quizLoading ? (
+                  <Flex align="center" gap={2}>
+                    <Spinner size="sm" color="purple.500" />
+                    <Text color="gray.600" fontSize="sm">
+                      Loading quiz for this lesson…
                     </Text>
                   </Flex>
-                )}
-              </Box>
-
-              <Box
-                w={{ base: "100%", lg: "320px" }}
-                flexShrink={0}
-                bg="white"
-                borderRadius="md"
-                boxShadow="md"
-                maxH={{ lg: "70vh" }}
-                overflowY="auto"
-              >
-                <Text
-                  fontWeight="bold"
-                  p={3}
-                  borderBottom="1px solid"
-                  borderColor="gray.200"
-                  fontSize="sm"
-                  color="gray.600"
-                  textTransform="uppercase"
-                  letterSpacing="wide"
-                >
-                  Course content
-                </Text>
-                {videos.length === 0 ? (
-                  <Box p={4}>
-                    <Text color="gray.600" fontSize="sm">
-                      No videos are published for this course yet.
-                    </Text>
-                  </Box>
+                ) : !practiceQuiz ? (
+                  <Text color="gray.600" fontSize="sm">
+                    {quizAvailability === "error"
+                      ? "We could not load the quiz for this lesson. Try refreshing the page."
+                      : "No quiz for this lesson."}
+                  </Text>
                 ) : (
-                  <VStack align="stretch" spacing={0} divider={<Divider />}>
-                    {videos.map((v, idx) => (
-                      <Button
-                        key={v._id || idx}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        h="auto"
-                        py={3}
-                        px={3}
-                        borderRadius={0}
-                        bg={idx === activeIndex ? "purple.50" : "transparent"}
-                        _hover={{ bg: "purple.100" }}
-                        onClick={() => setActiveIndex(idx)}
-                      >
-                        <Flex gap={3} w="100%" textAlign="left">
-                          <Image
-                            src={v.img}
-                            alt=""
-                            boxSize="56px"
-                            objectFit="cover"
-                            borderRadius="sm"
-                            flexShrink={0}
-                          />
-                          <Box minW={0}>
-                            <Text
-                              fontWeight="semibold"
-                              fontSize="sm"
-                              noOfLines={2}
-                              color="gray.800"
-                            >
-                              {v.title}
-                            </Text>
-                            {v.description ? (
-                              <Text
-                                fontSize="xs"
-                                color="gray.500"
-                                noOfLines={2}
-                              >
-                                {v.description}
-                              </Text>
-                            ) : null}
-                          </Box>
-                        </Flex>
-                      </Button>
+                  <VStack align="stretch" spacing={5}>
+                    <Text fontSize="sm" color="gray.600">
+                      {practiceQuiz.title}
+                    </Text>
+                    {practiceQuiz.questions.map((q, qIdx) => (
+                      <Box key={qIdx}>
+                        <Text fontWeight="semibold" mb={2} color="gray.800">
+                          {qIdx + 1}. {q.prompt}
+                        </Text>
+                        <RadioGroup
+                          value={
+                            quizAnswers[qIdx] !== undefined &&
+                            quizAnswers[qIdx] !== null
+                              ? String(quizAnswers[qIdx])
+                              : ""
+                          }
+                          onChange={(val) =>
+                            setQuizAnswers((prev) => ({
+                              ...prev,
+                              [qIdx]: Number(val),
+                            }))
+                          }
+                        >
+                          <Stack spacing={2} pl={1}>
+                            {q.choices.map((choice, cIdx) => (
+                              <Radio key={cIdx} value={String(cIdx)} colorScheme="purple">
+                                {choice}
+                              </Radio>
+                            ))}
+                          </Stack>
+                        </RadioGroup>
+                      </Box>
                     ))}
+                    <Button
+                      colorScheme="purple"
+                      alignSelf="flex-start"
+                      isLoading={quizSubmitting}
+                      isDisabled={!allQuizAnswered}
+                      onClick={handleQuizSubmit}
+                    >
+                      Submit answers
+                    </Button>
+                    {quizResult?.error ? (
+                      <Alert status="error" borderRadius="md">
+                        <AlertIcon />
+                        <Box>
+                          <AlertTitle fontSize="sm">Submit failed</AlertTitle>
+                          <AlertDescription fontSize="sm">
+                            {quizResult.error}
+                          </AlertDescription>
+                        </Box>
+                      </Alert>
+                    ) : null}
+                    {quizResult &&
+                    quizResult.percent !== undefined &&
+                    !quizResult.error ? (
+                      <Alert status="success" borderRadius="md">
+                        <AlertIcon />
+                        <Box>
+                          <AlertTitle fontSize="sm">Results</AlertTitle>
+                          <AlertDescription fontSize="sm">
+                            {quizResult.correctCount} of{" "}
+                            {quizResult.totalQuestions} correct (
+                            {quizResult.percent}%). You can submit again to record
+                            another attempt.
+                          </AlertDescription>
+                        </Box>
+                      </Alert>
+                    ) : null}
                   </VStack>
                 )}
               </Box>
-            </Flex>
-
-            {activeVideo && (
-              <Box mt={6} bg="white" p={5} borderRadius="md" boxShadow="sm">
-                <Heading size="md" mb={2}>
-                  {activeVideo.title}
-                </Heading>
-                {activeVideo.description ? (
-                  <Text color="gray.700">{activeVideo.description}</Text>
-                ) : null}
-              </Box>
-            )}
-
-            <Box mt={6} bg="white" p={5} borderRadius="md" boxShadow="sm">
-              <Heading size="md" mb={3} color="gray.800">
-                Lesson quiz
-              </Heading>
-              {quizLoading ? (
-                <Flex align="center" gap={2}>
-                  <Spinner size="sm" color="purple.500" />
-                  <Text color="gray.600" fontSize="sm">
-                    Loading quiz for this lesson…
-                  </Text>
-                </Flex>
-              ) : !practiceQuiz ? (
-                <Text color="gray.600" fontSize="sm">
-                  {quizAvailability === "error"
-                    ? "We could not load the quiz for this lesson. Try refreshing the page."
-                    : "No quiz for this lesson."}
-                </Text>
-              ) : (
-                <VStack align="stretch" spacing={5}>
-                  <Text fontSize="sm" color="gray.600">
-                    {practiceQuiz.title}
-                  </Text>
-                  {practiceQuiz.questions.map((q, qIdx) => (
-                    <Box key={qIdx}>
-                      <Text fontWeight="semibold" mb={2} color="gray.800">
-                        {qIdx + 1}. {q.prompt}
-                      </Text>
-                      <RadioGroup
-                        value={
-                          quizAnswers[qIdx] !== undefined &&
-                          quizAnswers[qIdx] !== null
-                            ? String(quizAnswers[qIdx])
-                            : ""
-                        }
-                        onChange={(val) =>
-                          setQuizAnswers((prev) => ({
-                            ...prev,
-                            [qIdx]: Number(val),
-                          }))
-                        }
-                      >
-                        <Stack spacing={2} pl={1}>
-                          {q.choices.map((choice, cIdx) => (
-                            <Radio key={cIdx} value={String(cIdx)} colorScheme="purple">
-                              {choice}
-                            </Radio>
-                          ))}
-                        </Stack>
-                      </RadioGroup>
-                    </Box>
-                  ))}
-                  <Button
-                    colorScheme="purple"
-                    alignSelf="flex-start"
-                    isLoading={quizSubmitting}
-                    isDisabled={!allQuizAnswered}
-                    onClick={handleQuizSubmit}
-                  >
-                    Submit answers
-                  </Button>
-                  {quizResult?.error ? (
-                    <Alert status="error" borderRadius="md">
-                      <AlertIcon />
-                      <Box>
-                        <AlertTitle fontSize="sm">Submit failed</AlertTitle>
-                        <AlertDescription fontSize="sm">
-                          {quizResult.error}
-                        </AlertDescription>
-                      </Box>
-                    </Alert>
-                  ) : null}
-                  {quizResult &&
-                  quizResult.percent !== undefined &&
-                  !quizResult.error ? (
-                    <Alert status="success" borderRadius="md">
-                      <AlertIcon />
-                      <Box>
-                        <AlertTitle fontSize="sm">Results</AlertTitle>
-                        <AlertDescription fontSize="sm">
-                          {quizResult.correctCount} of{" "}
-                          {quizResult.totalQuestions} correct (
-                          {quizResult.percent}%). You can submit again to record
-                          another attempt.
-                        </AlertDescription>
-                      </Box>
-                    </Alert>
-                  ) : null}
-                </VStack>
-              )}
-            </Box>
-          </>
-        )}
+            </>
+          )}
+        </Box>
+        <Footer />
       </Box>
-      <Footer />
-    </Box>
-  );
-}
+    );
+  }
