@@ -158,13 +158,12 @@ const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
               p={2}
               borderRadius="lg"
               fontSize="xs"
-              // Cấy CSS tùy chỉnh để render Markdown đẹp mắt bên trong Chakra UI
+              // CSS để render Markdown đẹp
               sx={{
                 '& p': { lineHeight: '1.5', mb: 1 },
                 '& ul, & ol': { ml: 4, mb: 2 },
                 '& li': { mb: 0.5 },
                 '& h3': { fontSize: 'sm', fontWeight: 'bold', mt: 2, mb: 1 },
-                // Format khối code xám đen cực xịn cho câu lệnh CLI/Code
                 '& pre': {
                   bg: 'gray.800',
                   color: 'gray.100',
@@ -178,7 +177,7 @@ const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
                 '& pre code': { bg: 'transparent', p: 0, fontWeight: 'normal' }
               }}
             >
-              {/* Phân luồng: AI dùng Markdown, User dùng Plain Text */}
+              {/* AI dùng Markdown, User dùng Plain Text */}
               {message.type === 'ai' ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.text}
@@ -189,7 +188,6 @@ const AIAssistantChat = ({ courseId, token, containerHeight = 'auto' }) => {
                 </Text>
               )}
 
-              {/* Phần Badge ngữ cảnh giữ nguyên */}
               {message.type === 'ai' && (
                 <HStack spacing={1} mt={1} pt={1} borderTop="1px solid" borderColor="gray.300">
                   <Badge
