@@ -125,7 +125,7 @@ export default function TeacherCourses() {
                           <Td>{el?.price}</Td>
                           <Td>{el?.teacher}</Td>
                           <Td> {/* Đưa các nút vào Td để đúng cấu trúc Table */}
-                            <Flex gap={2}>
+                            <Flex gap={2} flexWrap="wrap">
                               <Button
                                 size="sm"
                                 colorScheme="red"
@@ -133,6 +133,11 @@ export default function TeacherCourses() {
                               >
                                 Delete
                               </Button>
+                              <Link to={`/Teacher/create-quiz/${el?._id}`}>
+                                <Button size="sm" colorScheme="purple" variant="outline">
+                                  Lesson quiz
+                                </Button>
+                              </Link>
                               <Link to={`/Teacher/edit/${el?._id}`}>
                                 <ButtonGroup size="sm" isAttached variant="outline">
                                   <Button>Edit</Button>

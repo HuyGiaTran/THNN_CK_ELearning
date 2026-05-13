@@ -56,13 +56,13 @@ const AddTeacher = () => {
     const handlePageChange = (page) => {
       setPage(page);
     };
-    // console.log("store.length",store.length)
-    const count = 4;
-    // console.log("count",count)
-  
+
     const handlePageButton = (val) => {
       setPage((prev) => prev + val);
     };
+
+    const count = 4;
+    const courseRows = Array.isArray(store) ? store.filter(Boolean) : [];
 
   return (
 
@@ -108,8 +108,8 @@ const AddTeacher = () => {
                   <Th>Teacher</Th>
                 </Tr>
               </Thead>
-              {store?.length > 0 &&
-                store?.map((el, i) => {
+            {courseRows.length > 0 &&
+              courseRows.map((el, i) => {
                   return (
                     <Tbody key={i}>
                       <Tr>

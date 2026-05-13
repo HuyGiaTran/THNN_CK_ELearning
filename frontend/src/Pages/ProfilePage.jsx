@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { actionLoginSuccess } from "../Redux/UserReducer/actionType";
 import { showToast } from "../components/SignUp";
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from "../config/api";
 
 
 const ProfilePage = () => {
@@ -52,7 +53,7 @@ const ProfilePage = () => {
     const id = userStore?.userId;
 
     axios
-      .patch(`http://localhost:5001/users/update/${id}`, obj)
+      .patch(`${API_BASE_URL}/users/update/${id}`, obj)
       .then((res) => {
         dispatch(actionLoginSuccess(res?.data));
         localStorage.setItem(

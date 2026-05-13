@@ -30,17 +30,29 @@ import {
       case PRODUCT_FAILURE:
         return { ...state, isLoading: false, isError: true };
       case GET_PRODUCT_SUCCESS:
-        return { ...state, isLoading: false, data: payload };
+        return {
+          ...state,
+          isLoading: false,
+          data: Array.isArray(payload) ? payload.filter(Boolean) : [],
+        };
       case GET_User_SUCCESS:
         return { ...state, isLoading: false, users: payload };
       case GET_Video_SUCCESS:
         return { ...state, isLoading: false, videos: payload };
       case ADD_PRODUCT_SUCCESS:
-        return { ...state, isLoading: false, data: [...state.data, payload] };
+        return {
+          ...state,
+          isLoading: false,
+          data: payload ? [...state.data, payload] : state.data,
+        };
       case ADD_User_SUCCESS:
         return { ...state, isLoading: false, data: [...state.users, payload] };
       case ADD_Video_SUCCESS:
-        return { ...state, isLoading: false, data: [...state.videos, payload] };
+        return {
+          ...state,
+          isLoading: false,
+          videos: payload ? [...state.videos, payload] : state.videos,
+        };
       case PATCH_PRODUCT_SUCCESS:
         return { ...state, isLoading: false, data: [...state.data, payload] };
       case PATCH_User_SUCCESS:

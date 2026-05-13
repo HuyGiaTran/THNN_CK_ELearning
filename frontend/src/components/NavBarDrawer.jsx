@@ -21,6 +21,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import axios from "axios";
 import { actionUserLogout } from "../Redux/UserReducer/actionType";
 import { showToast } from "./SignUp";
+import { API_BASE_URL } from "../config/api";
 
 export function NavBarDrawer({ isOpen, onClose }) {
   const userStore = useSelector((store) => store.UserReducer);
@@ -56,7 +57,7 @@ export function NavBarDrawer({ isOpen, onClose }) {
     };
     axios
       .post(
-        "http://localhost:5001/users/logout",
+        `${API_BASE_URL}/users/logout`,
         {},
         { headers }
       )

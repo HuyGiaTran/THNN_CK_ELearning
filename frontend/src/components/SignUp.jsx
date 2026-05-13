@@ -17,7 +17,7 @@ import { AiOutlineEyeInvisible, AiFillEye } from "react-icons/ai";
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { signUpFetch } from "../Redux/UserReducer/action";
 import { actionsingUpError } from "../Redux/UserReducer/actionType";
 
@@ -54,6 +54,8 @@ const SignUp = () => {
   });
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
   const userStore = useSelector((store) => store.UserReducer);
   const dispatch = useDispatch();
   const [isChecked, setIsChecked] = useState(false);
@@ -151,7 +153,11 @@ const SignUp = () => {
     if(!userStore?.isError){
       setForm({ email: "", password: "", confirmPassword: "", name: "" });
       showToast({toast,message:'SignUp Successful',color:'green'});
-      navigate('/login')
+      navigate(
+        nextParam
+          ? `/login?next=${encodeURIComponent(nextParam)}`
+          : "/login"
+      );
     }else{
       showToast({toast,message:userStore?.isError,color:'red'});
     }
@@ -336,7 +342,13 @@ const SignUp = () => {
             </Box>
             <Box display="flex" m="1rem 0" fontSize="0.7rem">
               <Text>You already have Account with us?</Text>
-              <Link to="/login">
+              <Link
+                to={
+                  nextParam
+                    ? `/login?next=${encodeURIComponent(nextParam)}`
+                    : "/login"
+                }
+              >
                 <Text _hover={{}} fontWeight="500" ml="0.5rem" color="black">
                   Login
                 </Text>

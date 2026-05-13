@@ -23,14 +23,14 @@ import { capitalizeFirstLetter } from "../../Redux/UserReducer/action";
 import { useParams } from "react-router";
 import { Input, keyframes, useToast } from "@chakra-ui/react";
 import { showToast } from "../../components/SignUp";
+import { API_BASE_URL } from "../../config/api";
 
-export default function Payment({ isOpen, onOpen, onClose }) {
+export default function Payment({ isOpen, onOpen, onClose, onPurchaseSuccess }) {
   const { id } = useParams();
   const courseId = id;
   const upiRef = useRef(null);
   const [input, setinput] = useState("");
 
-  let baseURL = "http://localhost:5001";
   const token = JSON.parse(localStorage.getItem("user"))?.token || "";
 
   const [course, setCourse] = useState({});
@@ -38,9 +38,10 @@ export default function Payment({ isOpen, onOpen, onClose }) {
   const toast = useToast();
 
   useEffect(() => {
+    if (!courseId) return;
     const fetchCourse = async () => {
       try {
-        const res = await axios.get(`${baseURL}/courses/${courseId}`, {
+        const res = await axios.get(`${API_BASE_URL}/courses/${courseId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -52,7 +53,7 @@ export default function Payment({ isOpen, onOpen, onClose }) {
     };
 
     fetchCourse();
-  }, []);
+  }, [courseId, token]);
 
   // will show the box when click on upi
   function showUPI() {
@@ -79,7 +80,7 @@ export default function Payment({ isOpen, onOpen, onClose }) {
   function handlePayment() {
     axios
       .post(
-        `${baseURL}/users/addCourse/${courseId}`,
+        `${API_BASE_URL}/users/addCourse/${courseId}`,
         {},
         {
           headers: {
@@ -93,6 +94,9 @@ export default function Payment({ isOpen, onOpen, onClose }) {
           message: res?.data?.message || res?.data?.msg,
           color: "green",
         });
+        if (typeof onPurchaseSuccess === "function") {
+          onPurchaseSuccess();
+        }
         onClose();
       })
       .catch((err) => {

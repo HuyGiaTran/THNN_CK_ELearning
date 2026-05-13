@@ -13,6 +13,8 @@ import Setting from "../components/Adminitems/Setting";
 import GiftCard from "../components/Adminitems/GiftCard";
 import Users from "../components/Adminitems/Users";
 import SinglePage from "../components/singlePageComps/SinglePage";
+import CourseLearnPage from "../Pages/CourseLearnPage";
+import CourseEnrollPage from "../Pages/CourseEnrollPage";
 import Login from "../components/LogIn";
 import SignUp from "../components/SignUp";
 import Payment from "../Pages/Payment/Payment";
@@ -32,6 +34,7 @@ import AddTeacherCourse from "../components/TeacherComponents/AddCourse";
 import AddTeacherVideos from "../components/TeacherComponents/AddTeacherVideos";
 import AddTeacher from "../components/TeacherComponents/AddTeacher";
 import GetTeacherVideos from "../components/TeacherComponents/GetTeacherVideos";
+import TeacherCreateQuiz from "../components/TeacherComponents/TeacherCreateQuiz";
 
 
 const AllRoute = () => {
@@ -42,6 +45,22 @@ const AllRoute = () => {
         element={
           <PrivateRoutes>
             <SinglePage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/course/:id/enroll"
+        element={
+          <PrivateRoutes>
+            <CourseEnrollPage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/course/:id/learn"
+        element={
+          <PrivateRoutes>
+            <CourseLearnPage />
           </PrivateRoutes>
         }
       />
@@ -254,6 +273,17 @@ const AllRoute = () => {
           <TeacherRoute>
           <AddTeacherVideos />
           </TeacherRoute>
+          </PrivateRoutes>
+        }
+      />
+
+      <Route
+        path="/Teacher/create-quiz/:courseId"
+        element={
+          <PrivateRoutes>
+            <TeacherRoute>
+              <TeacherCreateQuiz />
+            </TeacherRoute>
           </PrivateRoutes>
         }
       />

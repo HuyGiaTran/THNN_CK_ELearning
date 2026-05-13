@@ -1,8 +1,8 @@
 const express  = require('express');
 const courseModel = require('../models/courses.model');
-const { UserModel } = require('../models/users.models');
 const { VideoModel } = require('../models/video.model');
 const { auth } = require('../middlewares/users.middleware');
+const { canUserAccessCourseContent } = require('../helpers/courseAccess');
 
 const videoRoute = express.Router();
 
@@ -108,16 +108,29 @@ videoRoute.post('/add/:courseId', async (req,res)=>{
 // EndPoint : /videos/courseVideos/:courseId
 // FRONTEND: When user want to access the videos of purchases courses
 
-videoRoute.get('/courseVideos/:courseId', async(req,res)=>{
-    try{
-        const courseId = req.params.courseId;
-        const course = await courseModel.findById({_id:courseId}).populate('videos')
-        //console.log(course)
-        res.status(200).json({course})
-    }catch(err){
-        res.status(400).json({message:'Something Went Wrong',error:err.message})
+videoRoute.get('/courseVideos/:courseId', async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const access = await canUserAccessCourseContent(req.body.userId, courseId, {
+      forbiddenMessage:
+        'You must be enrolled in this course to view its videos.',
+    });
+    if (!access.ok) {
+      return res.status(access.status).json({
+        message: access.message,
+        ...(access.code ? { code: access.code } : {}),
+      });
     }
-})  
+
+    const course = await courseModel.findById(courseId).populate('videos');
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    res.status(200).json({ course });
+  } catch (err) {
+    res.status(400).json({ message: 'Something Went Wrong', error: err.message });
+  }
+});
 
 
 module.exports = {videoRoute}

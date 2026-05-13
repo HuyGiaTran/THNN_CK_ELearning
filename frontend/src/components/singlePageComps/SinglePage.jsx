@@ -23,7 +23,7 @@ import { FaAngleRight } from "react-icons/fa";
 // import theme from './Font';
 import SingleAbsolute from "./SingleAbsolute";
 import SingleList from "./SingleList";
-import { useParams } from "react-router-dom";
+import { Link as RouterLink, useParams } from "react-router-dom";
 // import axios from "axios";
 import { useState, useEffect } from "react";
 import Payment from "../../Pages/Payment/Payment";
@@ -33,41 +33,124 @@ import { AiOutlineLock } from "react-icons/ai";
 import Navbar from "../UserComponents/UserNavbar";
 import Footer from "../../Pages/Footer";
 import { useSelector } from "react-redux";
+import { API_BASE_URL } from "../../config/api";
 
 export default function SinglePage() {
   const [res, setRes] = useState({});
+  const [videosLocked, setVideosLocked] = useState(false);
+  const [lockMessage, setLockMessage] = useState("");
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const { id } = useParams();
   const userStore = useSelector((store) => store.UserReducer);
+  const token = userStore?.token;
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // /courses/:courseID
-
-  let vdo_url = `http://localhost:5001/videos/courseVideos/${id}`;
-
-  console.log(vdo_url);
-
-  const getSinglePageData = (id) => {
-    const token = userStore?.token;
-
-    fetch(vdo_url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        console.log(res);
-        setRes(res);
-      })
-      .catch((err) => console.log(err));
-  };
-
   useEffect(() => {
-    getSinglePageData(id);
-  }, [id]);
+    let cancelled = false;
+
+    const authHeaders = {
+      "Content-Type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    };
+
+    async function load() {
+      if (!id) return;
+      setVideosLocked(false);
+      setLockMessage("");
+      setIsEnrolled(false);
+
+      if (!token) {
+        setIsEnrolled(false);
+        setVideosLocked(true);
+        setLockMessage("Sign in and enroll in this course to watch videos.");
+        setRes({});
+        return;
+      }
+
+      try {
+        const enrollRes = await fetch(
+          `${API_BASE_URL}/users/enrollment/${id}`,
+          { headers: authHeaders }
+        );
+        const enrollJson = await enrollRes.json().catch(() => ({}));
+        if (cancelled) return;
+
+        if (!enrollRes.ok) {
+          setIsEnrolled(false);
+          setVideosLocked(true);
+          setLockMessage(
+            enrollJson.message || "Could not verify enrollment. Try signing in again."
+          );
+          setRes({});
+          return;
+        }
+
+        setIsEnrolled(!!enrollJson.enrolled);
+
+        if (!enrollJson.enrolled) {
+          setVideosLocked(true);
+          setLockMessage(
+            "You are not enrolled in this course. Purchase or subscribe to unlock the full video library."
+          );
+          const courseRes = await fetch(`${API_BASE_URL}/courses/${id}`, {
+            headers: authHeaders,
+          });
+          const courseJson = await courseRes.json().catch(() => ({}));
+          if (cancelled) return;
+          if (courseJson.course) {
+            setRes({ course: { ...courseJson.course, videos: [] } });
+          } else {
+            setRes({});
+          }
+          return;
+        }
+
+        const vdoRes = await fetch(
+          `${API_BASE_URL}/videos/courseVideos/${id}`,
+          {
+            method: "GET",
+            headers: authHeaders,
+          }
+        );
+        const vdoJson = await vdoRes.json().catch(() => ({}));
+        if (cancelled) return;
+
+        if (vdoRes.status === 403) {
+          setVideosLocked(true);
+          setLockMessage(
+            vdoJson.message ||
+              "You must be enrolled in this course to view its videos."
+          );
+          const courseRes = await fetch(`${API_BASE_URL}/courses/${id}`, {
+            headers: authHeaders,
+          });
+          const courseJson = await courseRes.json().catch(() => ({}));
+          if (!cancelled && courseJson.course) {
+            setRes({ course: { ...courseJson.course, videos: [] } });
+          } else if (!cancelled) {
+            setRes({});
+          }
+          return;
+        }
+
+        if (!vdoRes.ok) {
+          setLockMessage(vdoJson.message || "Failed to load course videos.");
+          setRes(vdoJson || {});
+          return;
+        }
+
+        setRes(vdoJson);
+      } catch (err) {
+        if (!cancelled) console.log(err);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, token]);
 
   // prevent click on video
   const handleClickPrevent = (event) => {
@@ -101,6 +184,19 @@ export default function SinglePage() {
                     <Box className="description text-[16px] font-thin" w="40vw">
                       {res?.course?.description}
                     </Box>
+
+                    {isEnrolled && id ? (
+                      <Box mt={3}>
+                        <Button
+                          as={RouterLink}
+                          to={`/course/${id}/learn`}
+                          colorScheme="purple"
+                          size="md"
+                        >
+                          Continue learning
+                        </Button>
+                      </Box>
+                    ) : null}
 
                     <Box
                       className="rating space-x-2"
@@ -172,7 +268,41 @@ export default function SinglePage() {
           </Flex>
         </Box>
 
-        {res?.course?.videos?.length ? (
+        {videosLocked ? (
+          <Box
+            mt="3rem"
+            p="2rem"
+            border="1px solid"
+            borderColor="gray.300"
+            borderRadius="md"
+            bg="gray.50"
+            maxW="720px"
+            mx="auto"
+            textAlign="center"
+          >
+            <Flex justify="center" mb="3">
+              <AiOutlineLock color="tomato" size="48px" />
+            </Flex>
+            <Text fontSize="1.1rem" fontWeight="bold" mb="2">
+              Videos locked
+            </Text>
+            <Text mb="4" color="gray.700">
+              {lockMessage}
+            </Text>
+            <Button
+              as={RouterLink}
+              to={`/course/${id}/enroll`}
+              colorScheme="purple"
+              mb={3}
+              w={{ base: "100%", sm: "auto" }}
+            >
+              Enroll in course
+            </Button>
+            <Button colorScheme="gray" variant="outline" onClick={onOpen}>
+              View purchase options
+            </Button>
+          </Box>
+        ) : res?.course?.videos?.length ? (
           <Box mt="40px">
             {res?.course?.videos?.map((video, index) => {
               return (

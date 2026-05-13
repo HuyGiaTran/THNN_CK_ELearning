@@ -6,6 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 import "./LandingPageComponent.css";
 import Card from "./Card";
 import LoadingComponent from "../LoadingComponents/LoadingComponent";
+import { API_BASE_URL } from "../../config/api";
 
 const LandingPageCarousel = () => {
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ const LandingPageCarousel = () => {
   };
 
   useEffect(() => {
-    const url = "http://localhost:5001/courses/all";
+    const url = `${API_BASE_URL}/courses/all`;
     setLoading(true);
 
     fetch(url)

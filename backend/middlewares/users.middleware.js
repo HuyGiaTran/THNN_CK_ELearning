@@ -7,7 +7,7 @@ const auth = (req, res, next) => {
   if (token) {
     try {
       if (blacklist.includes(token)) {
-        res.json({ msg: "Please Login Again" });
+        return res.status(401).json({ msg: "Please Login Again" });
       }
       const decoded = jwt.verify(token, "SRM");
       if (decoded) {
@@ -16,13 +16,13 @@ const auth = (req, res, next) => {
         req.body.role = decoded.role;
         next();
       } else {
-        res.status(401).json({ msg: "not authorized" });
+        return res.status(401).json({ msg: "not authorized" });
       }
     } catch (error) {
-      res.status(400).json({ msg: error.message });
+      return res.status(400).json({ msg: error.message });
     }
   } else {
-    res.json({ msg: "Please Login" });
+    return res.status(401).json({ msg: "Please Login" });
   }
 };
 
