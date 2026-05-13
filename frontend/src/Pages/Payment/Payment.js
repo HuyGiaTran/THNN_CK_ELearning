@@ -10,360 +10,264 @@ import {
   ModalHeader,
   ModalOverlay,
 } from "@chakra-ui/modal";
-import DynamicSelect from "./DynamicSelect";
-import { Radio } from "@chakra-ui/radio";
-import { BsFillCreditCardFill } from "react-icons/bs";
-import { RiVisaFill } from "react-icons/ri";
-import { FaCcMastercard, FaWallet } from "react-icons/fa";
-import { SiMastercard, SiAmericanexpress, SiFlutter } from "react-icons/si";
-import { AiTwotoneBank } from "react-icons/ai";
-import { useEffect, useRef, useState } from "react";
+import { keyframes, useToast, Spinner, Image } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { capitalizeFirstLetter } from "../../Redux/UserReducer/action";
 import { useParams } from "react-router";
-import { Input, keyframes, useToast } from "@chakra-ui/react";
 import { showToast } from "../../components/SignUp";
 import { API_BASE_URL } from "../../config/api";
+import { QRCodeCanvas } from "qrcode.react";
 
 export default function Payment({ isOpen, onOpen, onClose, onPurchaseSuccess }) {
   const { id } = useParams();
   const courseId = id;
-  const upiRef = useRef(null);
-  const [input, setinput] = useState("");
-
+  const toast = useToast();
   const token = JSON.parse(localStorage.getItem("user"))?.token || "";
 
   const [course, setCourse] = useState({});
-  const vpiRef = useRef(null);
-  const toast = useToast();
+  const [loading, setLoading] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [payUrl, setPayUrl] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   useEffect(() => {
     if (!courseId) return;
     const fetchCourse = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/courses/${courseId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setCourse(res.data.course);
       } catch (err) {
         console.log(err);
       }
     };
-
     fetchCourse();
   }, [courseId, token]);
 
-  // will show the box when click on upi
-  function showUPI() {
-    upiRef.current.style.display = "block";
-  }
+  // Create MoMo payment request
+  const handleCreatePayment = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/payment/momo/create`,
+        { courseId, amount: course?.price },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-  // block display when click on show less
-  function blockUPI() {
-    upiRef.current.style.display = "none";
-  }
-
-  // handle input
-  function handleInput(e) {
-    setinput((p) => e.target.value);
-
-    if (input.includes("@")) {
-      vpiRef.current.style.background = "green";
-    } else {
-      vpiRef.current.style.background = "#90A4AE";
-    }
-  }
-
-  // handle payment
-  function handlePayment() {
-    axios
-      .post(
-        `${API_BASE_URL}/users/addCourse/${courseId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((res) => {
-        showToast({
-          toast,
-          message: res?.data?.message || res?.data?.msg,
-          color: "green",
-        });
-        if (typeof onPurchaseSuccess === "function") {
-          onPurchaseSuccess();
-        }
-        onClose();
-      })
-      .catch((err) => {
-        console.log(err);
-        showToast({
-          toast,
-          message: err?.response.data.error || err?.message,
-          color: "red",
-        });
-        onClose();
+      if (res.data.payUrl) {
+        setPayUrl(res.data.payUrl);
+        setQrCodeUrl(res.data.qrCodeUrl);
+      }
+    } catch (err) {
+      console.error("MoMo create error:", err);
+      showToast({
+        toast,
+        message: "Không thể tạo thanh toán MoMo. Vui lòng thử lại!",
+        color: "red",
       });
-    setinput("");
-  }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const openAnimation = keyframes`
-    0% {
-      transform: scale(0);
+  // Simulate successful payment (for demo/testing)
+  const handleSimulateSuccess = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/payment/momo/simulate`,
+        { courseId, amount: course?.price },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showToast({
+        toast,
+        message: res?.data?.message || "Thanh toán thành công!",
+        color: "green",
+      });
+
+      setPaymentSuccess(true);
+
+      if (typeof onPurchaseSuccess === "function") {
+        onPurchaseSuccess();
+      }
+
+      // Auto close after 2 seconds
+      setTimeout(() => {
+        onClose();
+        setPaymentSuccess(false);
+        setPayUrl("");
+        setQrCodeUrl("");
+      }, 2000);
+    } catch (err) {
+      console.error("MoMo simulate error:", err);
+      showToast({
+        toast,
+        message: err?.response?.data?.error || err?.message || "Thanh toán thất bại!",
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
     }
-    100% {
-      transform: scale(1);
-    }
-  `;
+  };
+
+  const handleClose = () => {
+    setPayUrl("");
+    setQrCodeUrl("");
+    setPaymentSuccess(false);
+    onClose();
+  };
+
+  // Generate MoMo QR code data for offline scanning
+  const momoQRData = `2|99|${course?.price || 0}|Thanh toan khoa hoc|${courseId}`;
 
   return (
     <>
-      {/* <Button onClick={onOpen}>Open Modal</Button> */}
-
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={handleClose} size="lg">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Checkout</ModalHeader>
+          <ModalHeader fontSize="xl" fontWeight="bold" textAlign="center">
+            {paymentSuccess ? "🎉 Thanh toán thành công!" : "Thanh toán qua MoMo"}
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            {/* payment page  */}
-            <Box>
+            {paymentSuccess ? (
+              <Box textAlign="center" py={6}>
+                <Text fontSize="lg" color="green.500" fontWeight="bold">
+                  Bạn đã đăng ký khóa học thành công!
+                </Text>
+                <Text mt={2} color="gray.600">
+                  Chúc bạn học tập vui vẻ 🎓
+                </Text>
+              </Box>
+            ) : (
               <Box>
-                <Flex justify="space-between">
-                  <Box>
-                    <Heading size="sm">Billing Address</Heading>
-                  </Box>
-                  <Box>
-                    <Heading size="sm">Total</Heading>
-                    <Heading size="xs">₹{course?.price}</Heading>
-                  </Box>
-                </Flex>
-                {/* 2nd bar  */}
-
-                <Flex>
-                  <Box mr="5px">
-                    <Text>Module: {capitalizeFirstLetter(course?.title)}</Text>
-                  </Box>
-                  <Box m="0 7px">
-                    <Text>
-                      Instructor: {capitalizeFirstLetter(course?.teacher)}
-                    </Text>
-                  </Box>
-                </Flex>
-                <Text fontSize="12px">{`Number of video you are getting ${
-                  course?.videos?.length || 1
-                }`}</Text>
-
-                {/* Address */}
-                <Box>
-                  <Box>
-                    <DynamicSelect />
-                  </Box>
-                  <Box>
-                    <Text fontSize="12px">
-                      SRM is required by law to collect applicable transaction
-                      taxes for purchases made in certain tax jurisdications.
-                    </Text>
-                  </Box>
-                </Box>
-
-                {/* payment method */}
-                {/* cards  */}
-                {/* <Box mt="15px">
-                  <Flex bg="gray.100" justify="space-between" p="10px">
-                    <Flex align="center">
-                      <Box>
-                        <Radio borderColor="black">
-                          <Flex ml="5px">
-                            <Box border="1px solid" p="2px 4px" bg="white">
-                              <BsFillCreditCardFill />
-                            </Box>
-                            <Heading size="xs" ml="7px">
-                              Cards
-                            </Heading>
-                          </Flex>
-                        </Radio>
-                      </Box>
-                    </Flex>
-                    <Flex w="40%" justify="space-evenly">
-                      {/* visa Cards 
-                      <Box border="1px solid" p="2px">
-                        <RiVisaFill size="25px" color="blue" />
-                      </Box>
-                      {/* american express 
-                      <Box border="1px solid" p="2px">
-                        <SiAmericanexpress size="25px" color="#1976D2" />
-                      </Box>
-                      {/* master cart 
-                      <Box border="1px solid" p="2px">
-                        <FaCcMastercard size={25} color="#FF5722" />
-                      </Box>
-                      {/* rupay  
-                      <Box
-                        style={{ transform: "rotate(180deg)" }}
-                        border="1px solid"
-                        p="2px"
-                      >
-                        <SiFlutter size="25px" color="#43A047" />
-                      </Box>
-                    </Flex>
-                  </Flex>
-                </Box> */}
-                {/* upi */}
-                <Box>
-                  <Flex
-                    mt="5px"
-                    bg="gray.100"
-                    justify="space-between"
-                    p="10px"
-                    onClick={showUPI}
-                  >
-                    <Flex align="center">
-                      <Box>
-                        <Radio borderColor="black">
-                          <Flex ml="5px">
-                            <Box style={{ transform: "rotate(180deg)" }}>
-                              <SiFlutter size="25px" color="#43A047" />
-                            </Box>
-                            <Heading size="xs" ml="7px">
-                              UPI
-                            </Heading>
-                          </Flex>
-                        </Radio>
-                      </Box>
-                    </Flex>
-                  </Flex>
-                  <Box
-                    ref={upiRef}
-                    display="none"
-                    animation={`${openAnimation} 0.2s ease`}
-                  >
-                    <Box p="8px">
-                      <Box border="1px solid" p="8px">
-                        {/* 1st box  */}
-                        <Box>
-                          <Text fontSize="12px" fontWeight="700">
-                            Make a selection on how you would like to use UPI
-                          </Text>
-                        </Box>
-                        {/* 2nd box  */}
-                        <Box
-                          border="1px solid #0D47A1"
-                          borderRadius="5px"
-                          p="3px"
-                          m="5px 0"
-                          mt="10px"
-                        >
-                          <Button
-                            disabled={true}
-                            fontSize="10px"
-                            color="#0D47A1"
-                            background="#E1F5FE"
-                            border="1px solid #0D47A1"
-                          >
-                            Virtual Payment Address
-                          </Button>
-                        </Box>
-                        {/* 3rd box  */}
-                        <Box m="10px 0" mb="25px">
-                          <Box>
-                            <Text fontSize="12px" fontWeight="700">
-                              Virtual Payment Address
-                            </Text>
-                          </Box>
-                          <Box mt="15px">
-                            <Input
-                              borderRadius="0px"
-                              border="1px solid black"
-                              w="100%"
-                              _focus={{ outline: "1px solid" }}
-                              focusBorderColor="transparent"
-                              onChange={handleInput}
-                              value={input}
-                            />
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box textAlign="center">
-                      <Text
-                        fontWeight="500"
-                        fontSize="10px"
-                        onClick={blockUPI}
-                        _hover={{ cursor: "pointer" }}
-                      >
-                        See Less
+                {/* Course Info */}
+                <Box mb={4} p={3} bg="gray.50" borderRadius="md">
+                  <Flex justify="space-between" align="center">
+                    <Box>
+                      <Text fontWeight="bold" fontSize="md">
+                        {course?.title || "Khóa học"}
+                      </Text>
+                      <Text fontSize="sm" color="gray.500">
+                        Giảng viên: {course?.teacher || "N/A"}
                       </Text>
                     </Box>
-                  </Box>
+                    <Box textAlign="right">
+                      <Text fontWeight="bold" fontSize="xl" color="red.500">
+                        {course?.price?.toLocaleString()}₫
+                      </Text>
+                    </Box>
+                  </Flex>
                 </Box>
-                {/* Net banking */}
-                {/* <Box>
-                  <Flex mt="5px" bg="gray.100" justify="space-between" p="10px">
-                    <Flex align="center">
-                      <Box>
-                        <Radio borderColor="black">
-                          <Flex ml="5px">
-                            <Box>
-                              <AiTwotoneBank size="25px" color="#1976D2" />
-                            </Box>
-                            <Heading size="xs" ml="7px">
-                              Net Banking
-                            </Heading>
-                          </Flex>
-                        </Radio>
-                      </Box>
-                    </Flex>
-                  </Flex>
-                </Box> */}
-                {/* mobile wallter  */}
-                {/* <Box>
-                  <Flex mt="5px" bg="gray.100" justify="space-between" p="10px">
-                    <Flex align="center">
-                      <Box>
-                        <Radio borderColor="black">
-                          <Flex ml="5px">
-                            <Box>
-                              <FaWallet size="20px" color="#78909C" />
-                            </Box>
-                            <Heading size="xs" ml="7px">
-                              Net Banking
-                            </Heading>
-                          </Flex>
-                        </Radio>
-                      </Box>
-                    </Flex>
-                  </Flex>
-                </Box> */}
+
+                {/* MoMo Payment Section */}
+                <Box textAlign="center" py={4}>
+                  <Heading size="md" mb={4}>
+                    Quét mã QR để thanh toán
+                  </Heading>
+
+                  {/* QR Code */}
+                  <Box
+                    p={4}
+                    bg="white"
+                    borderRadius="lg"
+                    border="2px solid"
+                    borderColor="gray.200"
+                    display="inline-block"
+                    mb={4}
+                  >
+                    {payUrl ? (
+                      <QRCodeCanvas value={payUrl} size={200} />
+                    ) : (
+                      <QRCodeCanvas value={momoQRData} size={200} />
+                    )}
+                  </Box>
+
+                  <Text fontSize="sm" color="gray.500" mb={4}>
+                    Sử dụng ứng dụng MoMo để quét mã QR
+                  </Text>
+
+                  {/* Payment URL Link */}
+                  {payUrl && (
+                    <Box mb={4}>
+                      <Text fontSize="sm" color="blue.500" mb={2}>
+                        Hoặc click vào link dưới đây để thanh toán:
+                      </Text>
+                      <Button
+                        as="a"
+                        href={payUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        colorScheme="blue"
+                        size="sm"
+                        variant="outline"
+                      >
+                        Mở MoMo App
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* Create Payment Button */}
+                  {!payUrl && (
+                    <Button
+                      colorScheme="pink"
+                      onClick={handleCreatePayment}
+                      isLoading={loading}
+                      loadingText="Đang tạo..."
+                      w="full"
+                      mb={3}
+                      size="lg"
+                      leftIcon={
+                        <Box as="span" fontWeight="bold">
+                          MoMo
+                        </Box>
+                      }
+                    >
+                      Tạo mã thanh toán MoMo
+                    </Button>
+                  )}
+
+                  {/* Simulate Success Button (for demo) */}
+                  <Button
+                    colorScheme="green"
+                    onClick={handleSimulateSuccess}
+                    isLoading={loading && payUrl !== ""}
+                    loadingText="Đang xử lý..."
+                    w="full"
+                    variant="outline"
+                    size="md"
+                  >
+                    ✅ Thanh toán thành công (Demo)
+                  </Button>
+
+                  <Text fontSize="xs" color="gray.400" mt={2}>
+                    * Nút "Thanh toán thành công" dùng để mô phỏng thanh toán thành công trong môi trường demo
+                  </Text>
+                </Box>
+
+                {/* MoMo Logo */}
+                <Flex justify="center" align="center" mt={2} gap={2}>
+                  <Text fontSize="sm" color="gray.400">
+                    Powered by
+                  </Text>
+                  <Text fontWeight="bold" color="pink.500" fontSize="md">
+                    MoMo
+                  </Text>
+                </Flex>
               </Box>
-            </Box>
+            )}
           </ModalBody>
 
           <ModalFooter>
             <Button
-              borderRadius="0px"
-              background="#1565C0"
-              color="white"
-              _hover={{ background: "#1E88E5", color: "#CFD8DC" }}
+              colorScheme="gray"
               mr={3}
-              onClick={onClose}
+              onClick={handleClose}
+              isDisabled={loading}
             >
-              Close
-            </Button>
-            <Button
-              onClick={handlePayment}
-              isDisabled={!input.includes("@")}
-              ref={vpiRef}
-              borderRadius="0px"
-              background="#90A4AE"
-              color="white"
-              _hover={{ color: "#004D40" }}
-            >
-              PayNow
+              {paymentSuccess ? "Đóng" : "Hủy"}
             </Button>
           </ModalFooter>
         </ModalContent>
