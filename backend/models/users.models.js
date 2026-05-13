@@ -12,7 +12,8 @@ const userSchema = mongoose.Schema(
     course:[{type: mongoose.Schema.Types.ObjectId, ref: 'course'}],
     role: {type: String,default: 'user'},
     image: String,
-    isPromotion: Boolean
+    isPromotion: Boolean,
+    certificates: [{type: mongoose.Schema.Types.ObjectId, ref: 'certificate'}]
   },
   {
     versionKey: false,

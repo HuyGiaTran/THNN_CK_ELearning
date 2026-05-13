@@ -25,13 +25,11 @@ const SingleList = () => {
         </div>
 
         <div className="sm:grid-cols-2 grid  text-[10px] space-y-1.5 ">
-          {list.map((item) => (
-            <>
-              <div className="flex">
-                <FaCheck className="m-2 " />
-                <p className=" max-w-[230px] ">{item}</p>
-              </div>
-            </>
+          {list.map((item, idx) => (
+            <div className="flex" key={`${idx}-${item.slice(0, 20)}`}>
+              <FaCheck className="m-2 " />
+              <p className=" max-w-[230px] ">{item}</p>
+            </div>
           ))}
         </div>
       </div>

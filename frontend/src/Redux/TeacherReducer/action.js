@@ -43,16 +43,21 @@ export const getCourse = (data,userId) => (dispatch) => {
 
 export const addProduct=(data)=>(dispatch)=>{
   dispatch({type:PRODUCT_REQUEST})
-  fetch("http://localhost:5001/courses/add",{
+  return fetch("http://localhost:5001/courses/add",{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
       Authorization:`Bearer ${token}`
     },
     body:JSON.stringify(data)
-  }).then(res=>res.json()).then((res)=>{console.log(res);
-      dispatch({type:ADD_PRODUCT_SUCCESS,payload:res.data})
-  }).catch(e=>console.log(e))
+  })
+    .then(res=>res.json())
+    .then((res)=>{
+      console.log(res);
+      dispatch({type:ADD_PRODUCT_SUCCESS,payload:res.data});
+      return res.data; // new course document (for navigation)
+    })
+    .catch(e=>console.log(e))
 }
 
 export const addUser=(data)=>(dispatch)=>{

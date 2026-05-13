@@ -3,6 +3,8 @@ const { connection } = require("./db");
 const { userRouter } = require("./routes/users.routes");
 const { courseRoute } = require("./routes/courses.route");
 const { videoRoute } = require("./routes/videos.route");
+const { quizRoute } = require("./routes/quiz.route");
+const { certificateRoute } = require("./routes/certificate.route");
 
 const cors = require('cors')
 
@@ -22,6 +24,10 @@ app.use("/users", userRouter);
 app.use("/courses", courseRoute);
 
 app.use("/videos", videoRoute);
+
+app.use("/quiz", quizRoute);
+
+app.use("/certificates", certificateRoute);
 
 app.get("/regenerateToken", (req, res) => {
   const rToken = req.headers.authorization?.split(" ")[1];

@@ -1,22 +1,75 @@
 import { Box, Image, Text } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const SingleAbsolute = ({ props }) => {
   const [page, setPage] = useState("left");
   const [random,setRandom] = useState(0)
+  const navigate = useNavigate();
 
-  const { onOpen,price,img } = props;
+  const { onOpen, price, img, _id } = props;
+  const authUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const token = authUser?.token;
+
+  const safeParseJsonArray = (value) => {
+    try {
+      const parsed = JSON.parse(value || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const bypassCourseIds = safeParseJsonArray(
+    localStorage.getItem("PAYMENT_BYPASS_COURSE_IDS")
+  ).map(String);
+  const courseId = String(_id || "");
+  const isPaymentBypassed = bypassCourseIds.includes(courseId);
+
+  async function enrollWithoutPayment() {
+    if (!token) {
+      alert("Bạn cần đăng nhập trước khi enroll.");
+      navigate("/login");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `http://localhost:5001/users/addCourse/${courseId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert(res?.data?.message || "Enrolled without payment (test mode).");
+    } catch (err) {
+      alert(err?.response?.data?.error || err?.message || "Enrollment failed");
+    }
+  }
 
   function handlePayment() {
+    if (isPaymentBypassed) {
+      enrollWithoutPayment();
+      // let paymentAmount = price;
+      // if (paymentAmount === 0) {
+      //   enrollWithoutPayment();
+      // }
+      return;
+    }
     onOpen();
   }
+
+  function handleTakeQuiz() {
+    navigate(`/quiz/${_id}`);
+  }
+
   useEffect(()=>{
    setRandom( (Math.random()*20).toFixed())
   },[])
-
-
   return (
+    
     <div className="xl:border text-white  xl:text-black xl:border-white xl:max-w-[280px] xl:shadow-md shadow-neutral-800  xl:bg-white">
       <div>
         <div>
@@ -89,7 +142,14 @@ const SingleAbsolute = ({ props }) => {
           onClick={handlePayment}
           className=" border-2 w-full py-[7px] text-sm font-bold"
         >
-          Buy this course
+          {isPaymentBypassed ? "Enroll (Payment OFF for test)" : "Buy this course"}
+        </button>
+
+        <button
+          onClick={handleTakeQuiz}
+          className="bg-blue-600 hover:bg-blue-700 w-full py-[7px] text-sm font-bold text-white mt-2 rounded"
+        >
+          🎓 Take Quiz
         </button>
 
         <div className="items-center text-[10px] space-y-1 w-full justify-center flex flex-col py-2">

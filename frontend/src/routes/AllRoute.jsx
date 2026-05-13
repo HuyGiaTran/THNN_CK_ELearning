@@ -32,6 +32,9 @@ import AddTeacherCourse from "../components/TeacherComponents/AddCourse";
 import AddTeacherVideos from "../components/TeacherComponents/AddTeacherVideos";
 import AddTeacher from "../components/TeacherComponents/AddTeacher";
 import GetTeacherVideos from "../components/TeacherComponents/GetTeacherVideos";
+import CertificatesPage from "../Pages/CertificatesPage";
+import QuizComponent from "../components/UserComponents/QuizComponent";
+import AddTeacherQuiz from "../components/TeacherComponents/AddQuiz";
 
 
 const AllRoute = () => {
@@ -281,6 +284,17 @@ const AllRoute = () => {
       />
 
       <Route
+        path="/Teacher/addQuiz/:courseId"
+        element={
+          <PrivateRoutes>
+            <TeacherRoute>
+              <AddTeacherQuiz />
+            </TeacherRoute>
+          </PrivateRoutes>
+        }
+      />
+
+      <Route
         path="/Teacher/videos"
         element={
           <PrivateRoutes>
@@ -305,6 +319,22 @@ const AllRoute = () => {
         element={
           <PrivateRoutes>
             <ProfilePage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/quiz/:courseId"
+        element={
+          <PrivateRoutes>
+            <QuizComponent />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/certificates"
+        element={
+          <PrivateRoutes>
+            <CertificatesPage />
           </PrivateRoutes>
         }
       />

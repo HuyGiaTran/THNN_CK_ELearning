@@ -154,6 +154,16 @@ import {
               >
                 Submit
               </Button>
+
+              <Button
+                mt={3}
+                colorScheme="teal"
+                size="md"
+                isFullWidth
+                onClick={() => navigate(`/Teacher/addQuiz/${id}`)}
+              >
+                Manage Quiz
+              </Button>
             </Box>
           </Flex>
         </Box>

@@ -20,7 +20,11 @@ export const loginFetch = (value) => (dispatch) => {
 
     })
     .catch((err) => {
-      dispatch(actionLoginError(err.message));
+      const msg =
+        err.response?.data?.msg ||
+        err.response?.data?.message ||
+        err.message;
+      dispatch(actionLoginError(msg));
       console.log(err);
     });
 };

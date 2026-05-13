@@ -144,6 +144,16 @@ const Dropdown = () => {
                     DashBoard
                   </MenuItem>
                 </Link>
+
+                <Link to="/certificates">
+                  <MenuItem
+                    p="0.7rem 0"
+                    fontWeight="500"
+                    borderTop="1px solid #D7DBDD"
+                  >
+                    My Certificates
+                  </MenuItem>
+                </Link>
               </Box>
             )}
             {/* admin options */}

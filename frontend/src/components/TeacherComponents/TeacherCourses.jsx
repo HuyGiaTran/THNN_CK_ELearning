@@ -142,6 +142,11 @@ export default function TeacherCourses() {
                                   />
                                 </ButtonGroup>
                               </Link>
+                              <Link to={`/Teacher/addQuiz/${el?._id}`}>
+                                <Button size="sm" colorScheme="blue">
+                                  Manage Quiz
+                                </Button>
+                              </Link>
                             </Flex>
                           </Td>
                         </Tr>

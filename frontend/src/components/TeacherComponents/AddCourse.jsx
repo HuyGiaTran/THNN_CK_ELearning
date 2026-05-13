@@ -35,10 +35,13 @@ import {
         return { ...prev, [name]: value };
       });
     };
-    const handleSubmit = () => {
-      dispatch(addProduct(detail));
-  
+    const handleSubmit = async () => {
+      const newCourse = await dispatch(addProduct(detail));
       alert("Course Added Successfully");
+      if (newCourse?._id) {
+        navigate(`/Teacher/addQuiz/${newCourse._id}`);
+        return;
+      }
       navigate("/Teacher/courses");
     };
   

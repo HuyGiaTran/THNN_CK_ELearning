@@ -54,12 +54,49 @@ userRouter.get("/", auth, async (req, res) => {
 // Access: all
 // EndPoint: /user/register;
 // FRONTEND: when user/admin/teacher want to register in site;
+function normalizeEmail(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Mongo matches email strings case-sensitively; same inbox can exist as Foo@x.com and foo@x.com. */
+function emailCaseInsensitiveFilter(normalizedEmail) {
+  return {
+    email: new RegExp(`^${escapeRegex(normalizedEmail)}$`, "i"),
+  };
+}
+
+async function verifyPasswordOrUpgradeLegacy(userDoc, plainPassword) {
+  const stored = userDoc.password;
+  if (!stored || typeof stored !== "string") return false;
+
+  const looksBcrypt = stored.startsWith("$2");
+  if (looksBcrypt) {
+    return bcrypt.compare(plainPassword, stored);
+  }
+
+  if (plainPassword === stored) {
+    userDoc.password = await bcrypt.hash(plainPassword, 5);
+    await userDoc.save();
+    return true;
+  }
+  return false;
+}
+
 userRouter.post("/register", async (req, res) => {
   try {
-    const { name, email, password, age, city, job, image } = req.body;
-    
-    // 1. Kiểm tra user tồn tại
-    const registeredUser = await UserModel.findOne({ email });
+    const { name, password, age, city, job, image } = req.body;
+    const email = normalizeEmail(req.body.email);
+
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Email and password are required" });
+    }
+
+    // 1. Kiểm tra user tồn tại (không phân biệt hoa thường — tránh trùng Gmail-style)
+    const registeredUser = await UserModel.findOne(emailCaseInsensitiveFilter(email));
     if (registeredUser) {
       return res.status(409).json({ msg: "User already exist. Please Login!!" });
     }
@@ -81,11 +118,13 @@ userRouter.post("/register", async (req, res) => {
 
     // 4. Lưu vào Database
     const savedUser = await user.save();
-    
-    // In ra terminal để chắc chắn dữ liệu đã đi
+
     console.log("===> Đã lưu user vào Atlas thành công:", savedUser._id);
 
-    res.status(201).json({ msg: "user created succesfully", user: savedUser });
+    const safeNewUser = savedUser.toObject();
+    delete safeNewUser.password;
+
+    res.status(201).json({ msg: "user created succesfully", user: safeNewUser });
 
   } catch (error) {
     // TẤT CẢ lỗi từ DB, Validation, kết nối... sẽ nhảy vào đây
@@ -103,38 +142,55 @@ userRouter.post("/register", async (req, res) => {
 // FRONTEND: when Admin/user/teacher want to login
 
 userRouter.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await UserModel.findOne({ email });
-    if (user) {
-      bcrypt.compare(password, user.password, (err, result) => {
-        // result == true
+  const email = normalizeEmail(req.body.email);
+  const password = typeof req.body.password === "string" ? req.body.password : "";
 
-        const token = jwt.sign(
-          { userId: user._id, user: user.name, role: user.role },
-          "SRM",
-          {
-            expiresIn: "7d",
-          }
-        );
-        const rToken = jwt.sign(
-          { userId: user._id, user: user.name },
-          "SRM",
-          {
-            expiresIn: "24d",
-          }
-        );
-        if (result) {
-          res
-            .status(202)
-            .json({ msg: "User LogIn Success", token, rToken, user });
-        } else {
-          res.status(401).json({ msg: "invalid credentials" });
-        }
-      });
-    } else {
-      res.status(404).json({ msg: "user does not exit. Signup first!!" });
+  try {
+    if (!email || !password) {
+      return res.status(400).json({ msg: "Email and password are required" });
     }
+
+    const candidates = await UserModel.find(emailCaseInsensitiveFilter(email));
+    if (!candidates.length) {
+      return res.status(404).json({ msg: "user does not exit. Signup first!!" });
+    }
+
+    let user = null;
+    for (const doc of candidates) {
+      if (await verifyPasswordOrUpgradeLegacy(doc, password)) {
+        user = doc;
+        break;
+      }
+    }
+
+    if (!user) {
+      return res.status(401).json({ msg: "invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, user: user.name, role: user.role },
+      "SRM",
+      {
+        expiresIn: "7d",
+      }
+    );
+    const rToken = jwt.sign(
+      { userId: user._id, user: user.name },
+      "SRM",
+      {
+        expiresIn: "24d",
+      }
+    );
+
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    res.status(202).json({
+      msg: "User LogIn Success",
+      token,
+      rToken,
+      user: safeUser,
+    });
   } catch (error) {
     res.status(400).json({ err: error.message });
   }
