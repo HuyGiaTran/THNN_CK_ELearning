@@ -23,6 +23,7 @@ import EditUser from "../components/Adminitems/EditUsers";
 import GetVideos from "../components/Adminitems/GetVideos";
 import AddVideo from "../components/Adminitems/AddVideos";
 import ProfilePage from "../Pages/ProfilePage";
+import CertificatesPage from "../Pages/CertificatesPage";
 import PrivateRoutes from "./PrivateRoutes";
 import { AdminRoute } from "./AdminRoute";
 import TeachVerify from "../components/TeacherComponents/TeachVerify";
@@ -335,6 +336,14 @@ const AllRoute = () => {
         element={
           <PrivateRoutes>
             <ProfilePage />
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/certificates"
+        element={
+          <PrivateRoutes>
+            <CertificatesPage />
           </PrivateRoutes>
         }
       />

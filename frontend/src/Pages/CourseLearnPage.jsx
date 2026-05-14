@@ -46,6 +46,92 @@ export default function CourseLearnPage() {
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
 
+  // Certificate state
+  const [certInfo, setCertInfo] = useState(null);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certIssuing, setCertIssuing] = useState(false);
+
+  // Fetch certificate eligibility when course is ready
+  useEffect(() => {
+    if (phase !== "ready" || !token || !id) return;
+    let cancelled = false;
+
+    async function checkCert() {
+      setCertLoading(true);
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/certificate/check/${id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await res.json();
+        if (!cancelled) {
+          setCertInfo(data);
+        }
+      } catch {
+        if (!cancelled) setCertInfo(null);
+      } finally {
+        if (!cancelled) setCertLoading(false);
+      }
+    }
+
+    checkCert();
+    return () => { cancelled = true; };
+  }, [phase, token, id]);
+
+  async function handleIssueCertificate() {
+    if (!token || !id) return;
+    setCertIssuing(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/certificate/issue/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({
+          title: "🎉 Certificate Issued!",
+          description: "You have earned a certificate for this course!",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        // Refresh cert info
+        setCertInfo((prev) => ({
+          ...prev,
+          hasCertificate: true,
+          certificate: data.certificate,
+        }));
+        // Navigate to certificates page
+        setTimeout(() => navigate("/certificates"), 2000);
+      } else {
+        toast({
+          title: "Certificate Error",
+          description: data.message || "Could not issue certificate.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch {
+      toast({
+        title: "Network Error",
+        description: "Could not issue certificate. Try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setCertIssuing(false);
+    }
+  }
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
@@ -518,6 +604,104 @@ export default function CourseLearnPage() {
                     </Alert>
                   ) : null}
                 </VStack>
+              )}
+            </Box>
+
+            {/* Certificate Section */}
+            <Box mt={6} bg="white" p={5} borderRadius="md" boxShadow="sm">
+              <Heading size="md" mb={3} color="gray.800">
+                🎓 Course Certificate
+              </Heading>
+              {certLoading ? (
+                <Flex align="center" gap={2}>
+                  <Spinner size="sm" color="purple.500" />
+                  <Text color="gray.600" fontSize="sm">
+                    Checking certificate eligibility…
+                  </Text>
+                </Flex>
+              ) : certInfo?.hasCertificate ? (
+                <Box>
+                  <Alert status="success" borderRadius="md" mb={3}>
+                    <AlertIcon />
+                    <Box>
+                      <AlertTitle fontSize="sm">Certificate Earned! 🎉</AlertTitle>
+                      <AlertDescription fontSize="sm">
+                        You have earned a certificate for this course.
+                      </AlertDescription>
+                    </Box>
+                  </Alert>
+                  <Button
+                    colorScheme="yellow"
+                    onClick={() => navigate("/certificates")}
+                    leftIcon={<Text as="span">🎓</Text>}
+                  >
+                    View My Certificate
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  {!certInfo?.isEnrolled ? (
+                    <Text color="gray.600" fontSize="sm">
+                      Enroll in this course and complete all quizzes with at least 80% to earn a certificate.
+                    </Text>
+                  ) : (
+                    <>
+                      <Text color="gray.600" fontSize="sm" mb={3}>
+                        Complete all lesson quizzes with an average score of <strong>80%</strong> or higher to earn your certificate.
+                      </Text>
+                      {certInfo && (
+                        <Box mb={3} p={3} bg="gray.50" borderRadius="md">
+                          <Flex justify="space-between" wrap="wrap" gap={2}>
+                            <Box>
+                              <Text fontSize="sm" color="gray.600">
+                                Videos completed:{" "}
+                                <strong>
+                                  {certInfo.videosCompleted || 0}/{certInfo.totalVideos || 0}
+                                </strong>
+                              </Text>
+                            </Box>
+                            <Box>
+                              <Text fontSize="sm" color="gray.600">
+                                Average score:{" "}
+                                <strong
+                                  style={{
+                                    color:
+                                      (certInfo.averageScore || 0) >= 80
+                                        ? "green"
+                                        : "orange",
+                                  }}
+                                >
+                                  {certInfo.averageScore || 0}%
+                                </strong>
+                              </Text>
+                            </Box>
+                          </Flex>
+                        </Box>
+                      )}
+                      {certInfo?.eligible ? (
+                        <Button
+                          colorScheme="green"
+                          size="lg"
+                          leftIcon={<Text as="span">🎓</Text>}
+                          isLoading={certIssuing}
+                          onClick={handleIssueCertificate}
+                        >
+                          Get My Certificate
+                        </Button>
+                      ) : (
+                        <Text color="gray.500" fontSize="sm" fontStyle="italic">
+                          {!certInfo || certInfo.videosCompleted === 0
+                            ? "Complete the quizzes above to track your progress."
+                            : certInfo.videosCompleted < certInfo.totalVideos
+                            ? `Complete quizzes for all ${certInfo.totalVideos} lessons to become eligible.`
+                            : (certInfo.averageScore || 0) < 80
+                            ? `Your average score is ${certInfo.averageScore}%. Re-take quizzes to improve your score to 80% or higher.`
+                            : "Check your eligibility by refreshing the page."}
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </Box>
               )}
             </Box>
           </>
