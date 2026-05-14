@@ -8,6 +8,8 @@ import {
     Select,
     Text,
     useBreakpointValue,
+    VStack,
+    Divider,
   } from "@chakra-ui/react";
   import React, { useEffect, useState } from "react";
   import { Link, useNavigate } from "react-router-dom";
@@ -21,18 +23,20 @@ import {
   import Pagination from "./Pagination";
   import AdminNavTop from "../AdminNavTop";
   import Navbar from "../UserComponents/UserNavbar";
+  import AdminUploadPDFContext from "../AdminUploadPDFContext";
 
 const Add = () => {
-
     const store = useSelector((store) => store.AdminReducer.data);
+    const userStore = useSelector((store) => store.UserReducer);
     const dispatch = useDispatch();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [order, setOrder] = useState("");
+    const [selectedCourse, setSelectedCourse] = useState(null);
     const limit = 4;
     const tableSize = useBreakpointValue({ base: "sm", sm: "md", md: "lg" });
     const courseSize = useBreakpointValue({ base: "md", sm: "lg", md: "xl" });
-  
+
     const handleSearch = (e) => {
       setSearch(e.target.value);
       // console.log(search)
@@ -42,24 +46,24 @@ const Add = () => {
       setOrder(value);
     };
     // console.log(order)
-  
+
     useEffect(() => {
       dispatch(getProduct(page, limit, search, order));
     }, [page, search, order, limit]);
 
     const navigate = useNavigate();
-  
+
     const handleVideos = (id, title) => {
         navigate(`/admin/videos/add/${id}`, { state: { id, title } });
       };
-  
+
     const handlePageChange = (page) => {
       setPage(page);
     };
     // console.log("store.length",store.length)
     const count = 4;
     // console.log("count",count)
-  
+
     const handlePageButton = (val) => {
       setPage((prev) => prev + val);
     };
@@ -119,13 +123,24 @@ const Add = () => {
                         <Td>{el.description}</Td>
                         <Td>{el.price}</Td>
                         <Td>{el.teacher}</Td>
-                        <Box>
-                          <Button
-                            onClick={() => handleVideos(el._id, el.title)}
-                          >
-                            Add Videos
-                          </Button>
-                        </Box>
+
+                        <Td>
+                          <ButtonGroup size="sm" spacing={2}>
+                            <Button
+                              colorScheme="blue"
+                              onClick={() => handleVideos(el._id, el.title)}
+                            >
+                              Add Videos
+                            </Button>
+                            <Button
+                              variant="outline"
+                              colorScheme="purple"
+                              onClick={() => setSelectedCourse(el._id)}
+                            >
+                              Upload PDF
+                            </Button>
+                          </ButtonGroup>
+                        </Td>
                       </Tr>
                     </Tbody>
                   );
@@ -149,6 +164,25 @@ const Add = () => {
             </Button>
           </Box>
         </Box>
+        {selectedCourse && (
+          <Box mt={6} p={5} bg="gray.50" borderRadius="md" borderLeft="4px" borderColor="purple.500">
+            <Text fontWeight="bold" mb={3}>
+              Tải tài liệu PDF cho khóa học
+            </Text>
+            <AdminUploadPDFContext
+              courseId={selectedCourse}
+              token={userStore?.token}
+            />
+            <Button
+              mt={3}
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedCourse(null)}
+            >
+              Đóng
+            </Button>
+          </Box>
+        )}
       </Box>
     </Grid>
 

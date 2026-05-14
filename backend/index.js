@@ -7,6 +7,7 @@ const { videoRoute } = require("./routes/videos.route");
 const { quizRouter } = require("./routes/quiz.route");
 const { paymentRoute } = require("./routes/payment.route");
 const { certificateRouter } = require("./routes/certificate.route");
+const { aiAssistantRoute } = require("./routes/aiAssistant.route");
 
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -28,6 +29,8 @@ app.use("/quizzes", quizRouter);
 app.use("/payment", paymentRoute);
 
 app.use("/certificate", certificateRouter);
+
+app.use("/ai-assistant", aiAssistantRoute);
 
 app.get("/regenerateToken", (req, res) => {
   const rToken = req.headers.authorization?.split(" ")[1];

@@ -24,6 +24,7 @@ import convertDateFormat, {
 import Pagination from "./Pagination";
 import AdminNavTop from "../AdminNavTop";
 import Navbar from "../UserComponents/UserNavbar";
+import AdminUploadPDFContext from "../AdminUploadPDFContext";
 
 const Courses = () => {
   const store = useSelector((store) => store.AdminReducer.data);
@@ -32,7 +33,9 @@ const Courses = () => {
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [uploadCourseId, setUploadCourseId] = useState(null);
   const limit = 4;
+  const token = useSelector((s) => s.UserReducer?.token);
   const tableSize = useBreakpointValue({ base: "sm", sm: "md", md: "lg" });
   const courseSize = useBreakpointValue({ base: "md", sm: "lg", md: "xl" });
 
@@ -194,6 +197,18 @@ const Courses = () => {
                               </ButtonGroup>
                             </Link>
                           </Flex>
+                          {uploadCourseId === el._id ? (
+                            <Box mt={2} w="100%">
+                              <AdminUploadPDFContext courseId={el._id} token={token} />
+                              <Button size="xs" mt={1} variant="ghost" colorScheme="red" onClick={() => setUploadCourseId(null)}>
+                                Close
+                              </Button>
+                            </Box>
+                          ) : (
+                            <Button size="xs" colorScheme="teal" variant="outline" mt={1} onClick={() => setUploadCourseId(el._id)}>
+                              Upload Material
+                            </Button>
+                          )}
                         </Td>
                       </Tr>
                     </Tbody>

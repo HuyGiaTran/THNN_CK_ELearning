@@ -18,12 +18,18 @@ import {
   AlertTitle,
   AlertDescription,
   useToast,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from "@chakra-ui/react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ReactPlayer from "react-player";
 import Navbar from "../components/UserComponents/UserNavbar";
 import Footer from "./Footer";
+import AIAssistantChat from "../components/AIAssistantChat";
 import { API_BASE_URL } from "../config/api";
 
 export default function CourseLearnPage() {
@@ -428,80 +434,119 @@ export default function CourseLearnPage() {
               </Box>
 
               <Box
-                w={{ base: "100%", lg: "320px" }}
+                w={{ base: "100%", lg: "360px" }}
                 flexShrink={0}
                 bg="white"
                 borderRadius="md"
                 boxShadow="md"
-                maxH={{ lg: "70vh" }}
-                overflowY="auto"
+                display="flex"
+                flexDirection="column"
+                h={{ lg: "70vh" }}
               >
-                <Text
-                  fontWeight="bold"
-                  p={3}
-                  borderBottom="1px solid"
-                  borderColor="gray.200"
-                  fontSize="sm"
-                  color="gray.600"
-                  textTransform="uppercase"
-                  letterSpacing="wide"
+                <Tabs
+                  display="flex"
+                  flexDirection="column"
+                  flex="1"
+                  minH={0}
+                  colorScheme="purple"
                 >
-                  Course content
-                </Text>
-                {videos.length === 0 ? (
-                  <Box p={4}>
-                    <Text color="gray.600" fontSize="sm">
-                      No videos are published for this course yet.
-                    </Text>
-                  </Box>
-                ) : (
-                  <VStack align="stretch" spacing={0} divider={<Divider />}>
-                    {videos.map((v, idx) => (
-                      <Button
-                        key={v._id || idx}
-                        variant="ghost"
-                        justifyContent="flex-start"
-                        h="auto"
-                        py={3}
-                        px={3}
-                        borderRadius={0}
-                        bg={idx === activeIndex ? "purple.50" : "transparent"}
-                        _hover={{ bg: "purple.100" }}
-                        onClick={() => setActiveIndex(idx)}
-                      >
-                        <Flex gap={3} w="100%" textAlign="left">
-                          <Image
-                            src={v.img}
-                            alt=""
-                            boxSize="56px"
-                            objectFit="cover"
-                            borderRadius="sm"
-                            flexShrink={0}
-                          />
-                          <Box minW={0}>
-                            <Text
-                              fontWeight="semibold"
-                              fontSize="sm"
-                              noOfLines={2}
-                              color="gray.800"
+                  <TabList
+                    borderBottom="1px solid"
+                    borderColor="gray.200"
+                    px={0}
+                  >
+                    <Tab flex={1} py={3} fontSize="sm" fontWeight="600">
+                      Course Content
+                    </Tab>
+                    <Tab flex={1} py={3} fontSize="sm" fontWeight="600">
+                      AI Assistant
+                    </Tab>
+                  </TabList>
+
+                  <TabPanels
+                    flex="1"
+                    minH={0}
+                    p={0}
+                    display="flex"
+                    flexDirection="column"
+                  >
+                    <TabPanel
+                      h="100%"
+                      p={0}
+                      overflowY="auto"
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      {videos.length === 0 ? (
+                        <Box p={4}>
+                          <Text color="gray.600" fontSize="sm">
+                            No videos are published for this course yet.
+                          </Text>
+                        </Box>
+                      ) : (
+                        <VStack align="stretch" spacing={0} divider={<Divider />}>
+                          {videos.map((v, idx) => (
+                            <Button
+                              key={v._id || idx}
+                              variant="ghost"
+                              justifyContent="flex-start"
+                              h="auto"
+                              py={3}
+                              px={3}
+                              borderRadius={0}
+                              bg={idx === activeIndex ? "purple.50" : "transparent"}
+                              _hover={{ bg: "purple.100" }}
+                              onClick={() => setActiveIndex(idx)}
                             >
-                              {v.title}
-                            </Text>
-                            {v.description ? (
-                              <Text
-                                fontSize="xs"
-                                color="gray.500"
-                                noOfLines={2}
-                              >
-                                {v.description}
-                              </Text>
-                            ) : null}
-                          </Box>
-                        </Flex>
-                      </Button>
-                    ))}
-                  </VStack>
-                )}
+                              <Flex gap={3} w="100%" textAlign="left">
+                                <Image
+                                  src={v.img}
+                                  alt=""
+                                  boxSize="56px"
+                                  objectFit="cover"
+                                  borderRadius="sm"
+                                  flexShrink={0}
+                                />
+                                <Box minW={0}>
+                                  <Text
+                                    fontWeight="semibold"
+                                    fontSize="sm"
+                                    noOfLines={2}
+                                    color="gray.800"
+                                  >
+                                    {v.title}
+                                  </Text>
+                                  {v.description ? (
+                                    <Text
+                                      fontSize="xs"
+                                      color="gray.500"
+                                      noOfLines={2}
+                                    >
+                                      {v.description}
+                                    </Text>
+                                  ) : null}
+                                </Box>
+                              </Flex>
+                            </Button>
+                          ))}
+                        </VStack>
+                      )}
+                    </TabPanel>
+
+                    <TabPanel
+                      h="100%"
+                      p={0}
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      <AIAssistantChat
+                        courseId={id}
+                        token={token}
+                        containerHeight="100%"
+                      />
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
               </Box>
             </Flex>
 
