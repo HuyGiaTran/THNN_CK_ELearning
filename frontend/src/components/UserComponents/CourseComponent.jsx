@@ -3,6 +3,7 @@ import { Box, Heading, Stack, Wrap, WrapItem } from "@chakra-ui/react";
 import LandingPageCarousel from "../../Pages/LandingPageComponents/LandingPageCarousel";
 import CategoryCarousel from "../../Pages/LandingPageComponents/CategoryCarousel";
 import InProgressCarousel from "./InProgressCarousel";
+import AllCoursesGrid from "./AllCoursesGrid";
 
 const CourseComponent = () => {
   return (
@@ -11,9 +12,7 @@ const CourseComponent = () => {
         <Heading as="h2" size="lg">
           All Courses
         </Heading>
-        <Wrap spacing={4}>
-          <LandingPageCarousel />
-        </Wrap>
+        <AllCoursesGrid />
       </Stack>
 
       <Stack spacing={4} mb={4}>
