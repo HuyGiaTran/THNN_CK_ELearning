@@ -1,5 +1,6 @@
 import {
     Box,
+    Badge,
     Button,
     ButtonGroup,
     Flex,
@@ -35,13 +36,11 @@ const AddTeacher = () => {
   
     const handleSearch = (e) => {
       setSearch(e.target.value);
-      // console.log(search)
     };
     const handleSelect = (e) => {
       const { value } = e.target;
       setOrder(value);
     };
-    // console.log(order)
   
     useEffect(() => {
       dispatch(getProduct(page, limit, search, order));
@@ -64,6 +63,19 @@ const AddTeacher = () => {
     const count = 4;
     const courseRows = Array.isArray(store) ? store.filter(Boolean) : [];
 
+    const getStatusBadge = (status) => {
+      switch (status) {
+        case "pending":
+          return <Badge colorScheme="yellow">Pending</Badge>;
+        case "published":
+          return <Badge colorScheme="green">Published</Badge>;
+        case "rejected":
+          return <Badge colorScheme="red">Rejected</Badge>;
+        default:
+          return <Badge>Unknown</Badge>;
+      }
+    };
+
   return (
 
     <Grid className="Nav" h={"99vh"} w="94%" gap={10}>
@@ -79,7 +91,7 @@ const AddTeacher = () => {
             }}
             gap={{ xl: 0, lg: 0, base: 7 }}
           >
-            <Text fontWeight={"bold"}>Welcome To Course</Text>
+            <Text fontWeight={"bold"}>Courses - Add Video</Text>
             <Select w={"80%"} onChange={handleSelect}>
               <option value="asc">Price Sort in Ascending Order</option>
               <option value="desc">Price Sort in Descending Order</option>
@@ -106,6 +118,8 @@ const AddTeacher = () => {
                   <Th>Description</Th>
                   <Th>Price</Th>
                   <Th>Teacher</Th>
+                  <Th>Status</Th>
+                  <Th>Actions</Th>
                 </Tr>
               </Thead>
             {courseRows.length > 0 &&
@@ -119,9 +133,11 @@ const AddTeacher = () => {
                         <Td>{el.description}</Td>
                         <Td>{el.price}</Td>
                         <Td>{el.teacher}</Td>
+                        <Td>{getStatusBadge(el.status)}</Td>
                         <Box>
                           <Button
                             onClick={() => handleVideos(el._id, el.title)}
+                            size="sm"
                           >
                             Add Videos
                           </Button>

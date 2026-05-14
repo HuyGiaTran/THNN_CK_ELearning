@@ -1,5 +1,6 @@
 import {
   Box,
+  Badge,
   Button,
   ButtonGroup,
   Flex,
@@ -12,11 +13,13 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@chakra-ui/react";
-import { AddIcon, EditIcon } from "@chakra-ui/icons";
+import { AddIcon, EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { useDispatch, useSelector } from "react-redux";
 import convertDateFormat, {
   deleteProduct,
   getProduct,
+  approveCourse,
+  rejectCourse,
 } from "../../Redux/AdminReducer/action";
 import Pagination from "./Pagination";
 import AdminNavTop from "../AdminNavTop";
@@ -28,60 +31,92 @@ const Courses = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const limit = 4;
   const tableSize = useBreakpointValue({ base: "sm", sm: "md", md: "lg" });
   const courseSize = useBreakpointValue({ base: "md", sm: "lg", md: "xl" });
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
-    // console.log(search)
   };
   const handleSelect = (e) => {
     const { value } = e.target;
     setOrder(value);
   };
-  // console.log(order)
 
   useEffect(() => {
     dispatch(getProduct(page, limit, search, order));
   }, [page, search, order, limit]);
 
   const handleDelete = (id, title) => {
-    // console.log(id)
     dispatch(deleteProduct(id));
     alert(`${title} is Deleted`);
+  };
+
+  const handleApprove = (id, title) => {
+    dispatch(approveCourse(id));
+    alert(`${title} has been approved and published!`);
+  };
+
+  const handleReject = (id, title) => {
+    dispatch(rejectCourse(id));
+    alert(`${title} has been rejected.`);
   };
 
   const handlePageChange = (page) => {
     setPage(page);
   };
-  // console.log("store.length",store.length)
   const count = 4;
-  // console.log("count",count)
 
   const handlePageButton = (val) => {
     setPage((prev) => prev + val);
   };
 
+  // Filter by status on frontend
+  const filteredStore = Array.isArray(store)
+    ? store.filter((el) => {
+        if (!el) return false;
+        if (filterStatus === "all") return true;
+        return el.status === filterStatus;
+      })
+    : [];
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "pending":
+        return <Badge colorScheme="yellow">Pending</Badge>;
+      case "published":
+        return <Badge colorScheme="green">Published</Badge>;
+      case "rejected":
+        return <Badge colorScheme="red">Rejected</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
+  };
+
   return (
     <Grid className="Nav" h={"99vh"} w="94%" gap={10}>
-      {/* <AdminSidebar/>  */}
       <Box mt='90px'>
           <AdminNavTop handleSearch={handleSearch} />
-        {/*  */}
         <Box className={`course ${courseSize}`}>
           <Grid
             templateColumns={{
-              xl: "repeat(3,20% 60% 20%)",
-              lg: "repeat(3,20% 60% 20%)",
+              xl: "repeat(4,15% 30% 30% 25%)",
+              lg: "repeat(4,15% 30% 30% 25%)",
               base: "repeat(1,1fr)",
             }}
             gap={{ xl: 0, lg: 0, base: 7 }}
           >
-            <Text fontWeight={"bold"}>Welcome To Course</Text>
+            <Text fontWeight={"bold"}>Course Management</Text>
             <Select w={"80%"} onChange={handleSelect}>
-              <option value="asc">Price Sort in Ascending Order</option>
-              <option value="desc">Price Sort in Descending Order</option>
+              <option value="asc">Price Sort Ascending</option>
+              <option value="desc">Price Sort Descending</option>
+            </Select>
+            <Select w={"80%"} placeholder="Filter by status" onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="all">All Courses</option>
+              <option value="pending">Pending Approval</option>
+              <option value="published">Published</option>
+              <option value="rejected">Rejected</option>
             </Select>
             <Box fontWeight={"bold"}>
               <Link to="/admin/addCourse">Create</Link>
@@ -102,38 +137,64 @@ const Courses = () => {
                   <Th>Title</Th>
                   <Th>Date</Th>
                   <Th>Category</Th>
-                  <Th>Description</Th>
                   <Th>Price</Th>
                   <Th>Teacher</Th>
+                  <Th>Status</Th>
+                  <Th>Actions</Th>
                 </Tr>
               </Thead>
-              {store?.length > 0 &&
-                store?.map((el, i) => {
+              {filteredStore?.length > 0 &&
+                filteredStore?.map((el, i) => {
                   return (
                     <Tbody key={i}>
                       <Tr>
                         <Td>{el.title}</Td>
                         <Td>{convertDateFormat(el.createdAt)}</Td>
                         <Td>{el.category}</Td>
-                        <Td>{el.description}</Td>
                         <Td>{el.price}</Td>
                         <Td>{el.teacher}</Td>
-                        <Box>
-                          <Button
-                            onClick={() => handleDelete(el._id, el.title)}
-                          >
-                            Delete
-                          </Button>
-                          <Link to={`/admin/edit/${el._id}`}>
-                            <ButtonGroup size="sm" isAttached variant="outline">
-                              <Button>Edit</Button>
-                              <IconButton
-                                aria-label="Add to friends"
-                                icon={<EditIcon />}
-                              />
-                            </ButtonGroup>
-                          </Link>
-                        </Box>
+                        <Td>{getStatusBadge(el.status)}</Td>
+                        <Td>
+                          <Flex gap={2} flexWrap="wrap">
+                            {el.status === "pending" && (
+                              <>
+                                <Button
+                                  size="xs"
+                                  colorScheme="green"
+                                  leftIcon={<CheckIcon />}
+                                  onClick={() => handleApprove(el._id, el.title)}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  colorScheme="red"
+                                  leftIcon={<CloseIcon />}
+                                  onClick={() => handleReject(el._id, el.title)}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="xs"
+                              colorScheme="red"
+                              variant="outline"
+                              onClick={() => handleDelete(el._id, el.title)}
+                            >
+                              Delete
+                            </Button>
+                            <Link to={`/admin/edit/${el._id}`}>
+                              <ButtonGroup size="xs" isAttached variant="outline">
+                                <Button>Edit</Button>
+                                <IconButton
+                                  aria-label="Edit course"
+                                  icon={<EditIcon />}
+                                />
+                              </ButtonGroup>
+                            </Link>
+                          </Flex>
+                        </Td>
                       </Tr>
                     </Tbody>
                   );
