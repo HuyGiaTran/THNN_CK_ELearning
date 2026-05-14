@@ -190,7 +190,7 @@ async function queryAIAssistant(courseId, userQuestion) {
           }
         });
 
-    // const aiAnswer = response.text ? response.text.trim() : "";
+    const aiAnswer = response.text ? response.text.trim() : "";
 
     // Validate if answer is within context
     const isWithinContext = isAnswerWithinContext(
