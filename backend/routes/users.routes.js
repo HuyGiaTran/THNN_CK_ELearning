@@ -303,26 +303,16 @@ userRouter.get("/Teachme/:userId", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update the user's role to "teacher"
-    user.role = "teacher";
+    if (user.role === 'teacher' || user.role === 'admin') {
+      return res.status(400).json({ message: "User is already a teacher or admin" });
+    }
+
+    // Update the user's teacherRequestStatus to "pending"
+    user.teacherRequestStatus = "pending";
     await user.save();
 
-    // New JWT so protected routes (e.g. POST /courses/add) see role "teacher"
-    const token = jwt.sign(
-      { userId: user._id, user: user.name, role: user.role },
-      "SRM",
-      { expiresIn: "7d" }
-    );
-    const rToken = jwt.sign(
-      { userId: user._id, user: user.name },
-      "SRM",
-      { expiresIn: "24d" }
-    );
-
     res.status(200).json({
-      message: "User role updated to teacher",
-      token,
-      rToken,
+      message: "Teacher request submitted successfully. Waiting for admin approval.",
       user,
     });
   } catch (err) {
@@ -330,6 +320,62 @@ userRouter.get("/Teachme/:userId", async (req, res) => {
     res.status(400).json({ message: "Something went wrong", error: err.message });
   }
 });
+
+// Admin: Get all pending teacher requests
+userRouter.get("/teacher-requests", auth, async (req, res) => {
+  try {
+    if (req.body.role === "admin") {
+      const pendingRequests = await UserModel.find({ teacherRequestStatus: "pending" });
+      res.status(200).json({ requests: pendingRequests });
+    } else {
+      res.status(401).json({ error: "You don't have access to this resource" });
+    }
+  } catch (err) {
+    res.status(400).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
+// Admin: Approve teacher request
+userRouter.post("/teacher-requests/approve/:userId", auth, async (req, res) => {
+  try {
+    if (req.body.role === "admin") {
+      const userId = req.params.userId;
+      const user = await UserModel.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      user.role = "teacher";
+      user.teacherRequestStatus = "approved";
+      await user.save();
+
+      res.status(200).json({ message: "Request approved", user });
+    } else {
+      res.status(401).json({ error: "Unauthorized" });
+    }
+  } catch (err) {
+    res.status(400).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
+// Admin: Reject teacher request
+userRouter.post("/teacher-requests/reject/:userId", auth, async (req, res) => {
+  try {
+    if (req.body.role === "admin") {
+      const userId = req.params.userId;
+      const user = await UserModel.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      user.teacherRequestStatus = "rejected";
+      await user.save();
+
+      res.status(200).json({ message: "Request rejected", user });
+    } else {
+      res.status(401).json({ error: "Unauthorized" });
+    }
+  } catch (err) {
+    res.status(400).json({ message: "Something went wrong", error: err.message });
+  }
+});
+
 
 
 

@@ -25,18 +25,21 @@ import {
   TabPanel,
 } from "@chakra-ui/react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import ReactPlayer from "react-player";
 import Navbar from "../components/UserComponents/UserNavbar";
 import Footer from "./Footer";
 import AIAssistantChat from "../components/AIAssistantChat";
 import { API_BASE_URL } from "../config/api";
+import { markVideoWatched } from "../Redux/ProgressReducer/action";
 
 export default function CourseLearnPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toast = useToast();
   const token = useSelector((s) => s.UserReducer?.token);
+  const userId = useSelector((s) => s.UserReducer?.userId);
   const isAuth = useSelector((s) => s.UserReducer?.isAuth);
 
   const [phase, setPhase] = useState("loading"); // loading | ready | error
@@ -356,6 +359,25 @@ export default function CourseLearnPage() {
     }
   }
 
+  // Handle video completion - mark as watched
+  const handleVideoEnd = async () => {
+    if (activeVideoId && id && userId && token) {
+      try {
+        await dispatch(markVideoWatched(activeVideoId, id, userId, token));
+        toast({
+          title: '✅ Video Marked as Watched',
+          description: 'Your progress has been saved.',
+          status: 'success',
+          duration: 2,
+          isClosable: true,
+          position: 'bottom-right',
+        });
+      } catch (err) {
+        console.error('Error marking video as watched:', err);
+      }
+    }
+  };
+
   return (
     <Box minH="100vh" bg="gray.100">
       <Navbar />
@@ -414,6 +436,7 @@ export default function CourseLearnPage() {
                       height="100%"
                       controls
                       playing={false}
+                      onEnded={handleVideoEnd}
                       config={{
                         youtube: { playerVars: { modestbranding: 1 } },
                       }}

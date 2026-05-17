@@ -219,6 +219,13 @@ export function NavBarDrawer({ isOpen, onClose }) {
                       Users
                     </Text>
                   </Link>
+                  <Link to="/admin/teacher-requests">
+                    <Text
+                      fontSize="0.8rem" p="1rem 0"
+                    >
+                      Teacher Requests
+                    </Text>
+                  </Link>
                   <Link to="/admin/videos">
                     <Text
                       fontSize="0.8rem" p="1rem 0"

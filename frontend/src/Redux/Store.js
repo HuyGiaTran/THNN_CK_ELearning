@@ -4,11 +4,13 @@ import thunk from 'redux-thunk'
 import {reducer as AdminReducer} from "./AdminReducer/reducer"
 import {reducer as UserReducer} from './UserReducer/reducer'
 import {reducer as TeacherReducer} from './TeacherReducer/reducer'
+import {ProgressReducer} from './ProgressReducer/reducer'
 
 const rootReducer=combineReducers({
 AdminReducer,
 UserReducer,
-TeacherReducer
+TeacherReducer,
+ProgressReducer
 })
 
 const store=legacy_createStore(rootReducer,applyMiddleware(thunk))

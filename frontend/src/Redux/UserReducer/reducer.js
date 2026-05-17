@@ -24,6 +24,7 @@ let init = JSON.parse(localStorage.getItem("user")) || {
   place: "",
   age: "",
   message: "",
+  teacherRequestStatus: "none",
 };
 
 const reducer = (state = init, action) => {
@@ -55,6 +56,7 @@ const reducer = (state = init, action) => {
         age: payload.user.age,
         job: payload.user.job,
         message: payload?.msg,
+        teacherRequestStatus: payload.user.teacherRequestStatus || "none",
         isError: "",
       };
       writeLocalStorage("user", newState);

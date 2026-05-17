@@ -4,26 +4,17 @@ import {
   Button,
   Card,
   CardBody,
-  CardFooter,
   Flex,
   Heading,
   Image,
   Stack,
   Text,
   useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  // BreadcrumbSeparator,
-} from "@chakra-ui/react";
-
-import { FaAngleRight } from "react-icons/fa";
-// import theme from './Font';
 import SingleAbsolute from "./SingleAbsolute";
 import SingleList from "./SingleList";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { Link as RouterLink, useParams, useNavigate } from "react-router-dom";
 // import axios from "axios";
 import { useState, useEffect } from "react";
 import Payment from "../../Pages/Payment/Payment";
@@ -32,17 +23,24 @@ import { capitalizeFirstLetter } from "../../Redux/UserReducer/action";
 import { AiOutlineLock } from "react-icons/ai";
 import Navbar from "../UserComponents/UserNavbar";
 import Footer from "../../Pages/Footer";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { API_BASE_URL } from "../../config/api";
+import CourseProgressBar from "../UserComponents/CourseProgressBar";
+import { fetchCourseProgress } from "../../Redux/ProgressReducer/action";
 
 export default function SinglePage() {
   const [res, setRes] = useState({});
   const [videosLocked, setVideosLocked] = useState(false);
   const [lockMessage, setLockMessage] = useState("");
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [courseProgress, setCourseProgress] = useState(null);
   const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const toast = useToast();
   const userStore = useSelector((store) => store.UserReducer);
   const token = userStore?.token;
+  const userId = userStore?.userId;
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -152,6 +150,28 @@ export default function SinglePage() {
     };
   }, [id, token]);
 
+  // Fetch course progress when enrolled
+  useEffect(() => {
+    if (id && userId && token && isEnrolled) {
+      fetchCourseProgress(id, userId, token).then((progress) => {
+        if (progress) {
+          setCourseProgress(progress);
+          // Show toast notification if course completed
+          if (progress.isCompleted) {
+            toast({
+              title: '🎉 Course Completed!',
+              description: 'You\'ve finished all videos! Ready to take the final quiz?',
+              status: 'success',
+              duration: 5,
+              isClosable: true,
+              position: 'top-right',
+            });
+          }
+        }
+      });
+    }
+  }, [id, userId, token, isEnrolled, dispatch, toast]);
+
   // prevent click on video
   const handleClickPrevent = (event) => {
     event.preventDefault();
@@ -197,6 +217,32 @@ export default function SinglePage() {
                         </Button>
                       </Box>
                     ) : null}
+
+                    {/* Course Progress Bar */}
+                    {isEnrolled && id && userId && token && (
+                      <Box mt={5}>
+                        <CourseProgressBar
+                          courseId={id}
+                          userId={userId}
+                          token={token}
+                        />
+                      </Box>
+                    )}
+
+                    {/* Final Quiz Button - Show when course is completed */}
+                    {isEnrolled && id && courseProgress?.isCompleted && (
+                      <Box mt={4}>
+                        <Button
+                          onClick={() => navigate(`/quiz/${id}`)}
+                          colorScheme="green"
+                          size="lg"
+                          width="full"
+                          fontWeight="bold"
+                        >
+                          🎓 Take Final Quiz & Get Certificate
+                        </Button>
+                      </Box>
+                    )}
 
                     <Box
                       className="rating space-x-2"

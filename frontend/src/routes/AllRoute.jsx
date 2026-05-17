@@ -36,6 +36,7 @@ import AddTeacherVideos from "../components/TeacherComponents/AddTeacherVideos";
 import AddTeacher from "../components/TeacherComponents/AddTeacher";
 import GetTeacherVideos from "../components/TeacherComponents/GetTeacherVideos";
 import TeacherCreateQuiz from "../components/TeacherComponents/TeacherCreateQuiz";
+import TeacherRequests from "../components/Adminitems/TeacherRequests";
 
 
 const AllRoute = () => {
@@ -173,6 +174,16 @@ const AllRoute = () => {
           <PrivateRoutes>
             <AdminRoute>
             <Users />
+            </AdminRoute>
+          </PrivateRoutes>
+        }
+      />
+      <Route
+        path="/admin/teacher-requests"
+        element={
+          <PrivateRoutes>
+            <AdminRoute>
+              <TeacherRequests />
             </AdminRoute>
           </PrivateRoutes>
         }

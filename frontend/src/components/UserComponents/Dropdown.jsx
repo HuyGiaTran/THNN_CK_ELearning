@@ -214,6 +214,15 @@ const Dropdown = () => {
                     Users
                   </MenuItem>
                 </Link>
+                <Link to="/admin/teacher-requests">
+                  <MenuItem
+                    p="0.7rem 0"
+                    fontWeight="500"
+                    borderTop="1px solid #D7DBDD"
+                  >
+                    Teacher Requests
+                  </MenuItem>
+                </Link>
                 <Link to="/admin/Add">
                   <MenuItem
                     p="0.7rem 0"

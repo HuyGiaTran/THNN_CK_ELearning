@@ -15,12 +15,14 @@ import Dropdown from "./Dropdown";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NavBarDrawer } from "../NavBarDrawer";
 import { showToast } from "../SignUp";
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const isMobile = useBreakpointValue({ base: true, lg: false });
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem('user'))
+  const userStore = useSelector((store) => store.UserReducer);
+  const user = userStore?.isAuth ? userStore : (JSON.parse(localStorage.getItem('user')) || {});
   
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -162,12 +164,28 @@ const Navbar = () => {
         {!isMobile && (
           <Flex align="center">
             <Box mr={4}>
-              <Link
-                _hover={{ color: "#003e9c", textDecoration: "underline" }}
-                href="/Teachme"
-              >
-                {user.role!=='teacher' && user.role!=='admin' && 'Teach On SRM'}            
-              </Link>
+              {user.role !== 'teacher' && user.role !== 'admin' && (
+                user.teacherRequestStatus === 'pending' ? (
+                  <Text color="gray.500" fontWeight="medium" cursor="not-allowed">
+                    Teacher Request Pending
+                  </Text>
+                ) : user.teacherRequestStatus === 'rejected' ? (
+                  <Link
+                    _hover={{ color: "#003e9c", textDecoration: "underline" }}
+                    href="/Teachme"
+                    color="red.500"
+                  >
+                    Request Rejected (Try Again)
+                  </Link>
+                ) : (
+                  <Link
+                    _hover={{ color: "#003e9c", textDecoration: "underline" }}
+                    href="/Teachme"
+                  >
+                    Teach On SRM
+                  </Link>
+                )
+              )}
             </Box>
             <Box>
               <Dropdown />

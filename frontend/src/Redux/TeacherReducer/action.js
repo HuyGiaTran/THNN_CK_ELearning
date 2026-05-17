@@ -26,7 +26,7 @@ function getAuthToken() {
 
 export const changeRole = (data, userId) => (dispatch) => {
   const token = getAuthToken();
-  fetch(`${API_BASE_URL}/users/Teachme/${userId}`, {
+  return fetch(`${API_BASE_URL}/users/Teachme/${userId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -35,22 +35,26 @@ export const changeRole = (data, userId) => (dispatch) => {
   })
     .then((res) => res.json())
     .then((res) => {
-      if (res.token && res.user) {
+      if (res.user) {
+        const oldUser = JSON.parse(localStorage.getItem("user")) || {};
         dispatch(
           actionLoginSuccess({
-            token: res.token,
-            rToken: res.rToken,
+            token: oldUser.token || token,
+            rToken: oldUser.rToken,
             user: res.user,
             msg: res.message,
           })
         );
+        return res;
       } else {
         dispatch({ type: PRODUCT_FAILURE });
+        throw new Error(res.message || "Failed to submit request");
       }
     })
     .catch((e) => {
       console.log(e);
       dispatch({ type: PRODUCT_FAILURE });
+      throw e;
     });
 };
 

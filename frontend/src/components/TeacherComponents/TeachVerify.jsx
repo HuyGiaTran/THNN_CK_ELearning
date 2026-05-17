@@ -11,6 +11,7 @@ import {
   Button,
   UnorderedList,
   ListItem,
+  useToast,
 } from '@chakra-ui/react';
 
 import { useNavigate } from "react-router-dom";
@@ -21,13 +22,32 @@ const TeachVerify = () => {
     
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const toast = useToast();
 
   const user = JSON.parse(localStorage.getItem('user'))
 //   console.log(user);
 
   function teacher() {
-    dispatch(changeRole('teacher',user.userId));
-    navigate("/TeacherDashboard");
+    dispatch(changeRole('teacher',user.userId))
+      .then((res) => {
+        toast({
+          title: "Request Submitted",
+          description: "Your request to become a teacher has been submitted for admin approval.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        navigate("/home");
+      })
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: err.message || "Something went wrong.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      });
   }
   
 
